@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, Column, Integer, String, DateTime, Enum
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 import enum
 from app.core.database import Base
 
@@ -22,3 +23,10 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    profile = relationship("ApplicantProfile", back_populates="user", uselist=False)
+    company = relationship("Company", back_populates="owner", uselist=False)
+    resumes = relationship("Resume", back_populates="applicant")
+    applications = relationship("Application", back_populates="applicant")
+    course_progress = relationship("app.models.course.CourseProgress", back_populates="user")
+

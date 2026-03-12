@@ -1,0 +1,112 @@
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Layout } from "@/components/Layout";
+import { getMyVacancies, deleteVacancy } from "@/services/employerService";
+import { Vacancy } from "@/types/vacancy";
+import { Plus, Edit, Trash2, Eye } from "lucide-react";
+
+const EmployerVacanciesPage: React.FC = () => {
+  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    loadVacancies();
+  }, []);
+
+  const loadVacancies = async () => {
+    try {
+      const data = await getMyVacancies();
+      setVacancies(data);
+    } catch (error) {
+      console.error("Failed to load vacancies", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm("Вы уверены, что хотите удалить эту вакансию?")) {
+      try {
+        await deleteVacancy(id);
+        setVacancies(vacancies.filter((v) => v.id !== id));
+      } catch (error) {
+        console.error("Failed to delete vacancy", error);
+      }
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Мои вакансии</h1>
+          <button
+            onClick={() => navigate("/employer/vacancies/new")}
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Создать вакансию
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-10">Загрузка...</div>
+        ) : vacancies.length === 0 ? (
+          <div className="text-center py-10 text-gray-500">
+            У вас пока нет активных вакансий.
+          </div>
+        ) : (
+          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            <ul className="divide-y divide-gray-200">
+              {vacancies.map((vacancy) => (
+                <li key={vacancy.id}>
+                  <div className="px-4 py-4 sm:px-6 flex justify-between items-center">
+                    <div>
+                      <h3 className="text-lg leading-6 font-medium text-primary-600 truncate">
+                        {vacancy.title}
+                      </h3>
+                      <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                        {vacancy.city || "Город не указан"} •{" "}
+                        {vacancy.type === "internship"
+                          ? "Стажировка"
+                          : "Вакансия"}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => navigate(`/vacancies/${vacancy.id}`)}
+                        className="text-gray-400 hover:text-gray-600 p-2"
+                        title="Просмотр"
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() =>
+                          navigate(`/employer/vacancies/${vacancy.id}/edit`)
+                        }
+                        className="text-blue-400 hover:text-blue-600 p-2"
+                        title="Редактировать"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(vacancy.id)}
+                        className="text-red-400 hover:text-red-600 p-2"
+                        title="Удалить"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </Layout>
+  );
+};
+
+export default EmployerVacanciesPage;

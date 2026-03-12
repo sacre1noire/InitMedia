@@ -11,6 +11,9 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from app.core.config import settings
 from app.core.database import Base
 from app.models.user import User  # Импортируем модели
+from app.models.profile import ApplicantProfile
+from app.models.course import Course, Lesson, CourseProgress
+
 
 # this is the Alembic Config object
 config = context.config

@@ -1,11 +1,22 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { AuthGuard } from '@/components/AuthGuard';
-import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
-import HomePage from '@/pages/HomePage';
-import ProfilePage from '@/pages/ProfilePage';
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthGuard } from "@/components/AuthGuard";
+import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
+import HomePage from "@/pages/HomePage";
+import ProfilePage from "@/pages/ProfilePage";
+import ProfileEditPage from "@/pages/ProfileEditPage";
+import VacanciesPage from "@/pages/VacanciesPage";
+import VacancyDetailsPage from "@/pages/VacancyDetailsPage";
+import EmployerVacanciesPage from "@/pages/EmployerVacanciesPage";
+import VacancyEditPage from "@/pages/VacancyEditPage";
+import EmployerApplicationsPage from "@/pages/EmployerApplicationsPage";
+import ApplicantApplicationsPage from "@/pages/ApplicantApplicationsPage";
+import CandidateSearchPage from "@/pages/CandidateSearchPage";
+import CoursesPage from "@/pages/CoursesPage";
+import CourseDetailsPage from "@/pages/CourseDetailsPage";
+import LessonPage from "@/pages/LessonPage";
 
 function App() {
   return (
@@ -14,6 +25,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+
           <Route
             path="/"
             element={
@@ -22,6 +34,7 @@ function App() {
               </AuthGuard>
             }
           />
+
           <Route
             path="/profile"
             element={
@@ -30,6 +43,117 @@ function App() {
               </AuthGuard>
             }
           />
+          <Route
+            path="/profile/edit"
+            element={
+              <AuthGuard>
+                <ProfileEditPage />
+              </AuthGuard>
+            }
+          />
+
+          {/* Public/Applicant Routes */}
+          <Route
+            path="/vacancies"
+            element={
+              <AuthGuard>
+                <VacanciesPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/vacancies/:id"
+            element={
+              <AuthGuard>
+                <VacancyDetailsPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/applications/my"
+            element={
+              <AuthGuard>
+                <ApplicantApplicationsPage />
+              </AuthGuard>
+            }
+          />
+
+          {/* Course Routes */}
+          <Route
+            path="/courses"
+            element={
+              <AuthGuard>
+                <CoursesPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/courses/:id"
+            element={
+              <AuthGuard>
+                <CourseDetailsPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/courses/:id/lessons/:lessonId"
+            element={
+              <AuthGuard>
+                <LessonPage />
+              </AuthGuard>
+            }
+          />
+
+          {/* Employer Routes */}
+          <Route
+            path="/employer/vacancies"
+            element={
+              <AuthGuard>
+                <EmployerVacanciesPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/employer/vacancies/new"
+            element={
+              <AuthGuard>
+                <VacancyEditPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/employer/vacancies/:id/edit"
+            element={
+              <AuthGuard>
+                <VacancyEditPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/employer/applications"
+            element={
+              <AuthGuard>
+                <EmployerApplicationsPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/employer/candidates"
+            element={
+              <AuthGuard>
+                <CandidateSearchPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/employer/candidates/:id"
+            element={
+              <AuthGuard>
+                <ProfilePage />
+              </AuthGuard>
+            }
+          />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
