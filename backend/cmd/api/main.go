@@ -1,0 +1,126 @@
+package main
+
+import (
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
+	"backend/internal/platform/jwt"
+	"backend/internal/repository/postgres"
+	"backend/internal/transport/http/handler"
+	"backend/internal/transport/http/middleware"
+	usecase "backend/internal/usecase/user"
+
+	_ "backend/docs"
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+)
+
+// @title           InitMedia API
+// @version         1.0
+// @description     API for InitMedia platform.
+// @host            localhost:8080
+// @BasePath        /
+func main() {
+	// Load environment variables
+	if err := godotenv.Load("../../../.env"); err != nil {
+		log.Println("No .env file found in ../../../.env, checking current directory")
+		if err := godotenv.Load(); err != nil {
+			log.Println("No .env file found")
+		}
+	}
+
+	dbUrl := os.Getenv("DATABASE_URL")
+	if dbUrl == "" {
+		log.Fatal("DATABASE_URL is not set")
+	}
+
+	// Connect to database
+	config, err := pgxpool.ParseConfig(dbUrl)
+	if err != nil {
+		log.Fatalf("Unable to parse database URL: %v", err)
+	}
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		log.Fatalf("Unable to create connection pool: %v", err)
+	}
+	defer pool.Close()
+
+	// Verify connection
+	if err := pool.Ping(context.Background()); err != nil {
+		log.Fatalf("Unable to ping database: %v", err)
+	}
+	log.Println("Successfully connected to the database")
+
+	// Setup Dependencies
+	userRepo := postgres.NewUserRepo(pool)
+	sessionRepo := postgres.NewSessionRepo(pool)
+	tokenGenerator := jwt.NewTokenGenerator(os.Getenv("JWT_SECRET"), 15*time.Minute)
+	authUseCase := usecase.NewAuthUseCase(userRepo, sessionRepo, tokenGenerator)
+	authHandler := handler.NewAuthHandler(authUseCase)
+	authMiddleware := middleware.NewAuthMiddleware(tokenGenerator)
+
+	// Setup Router
+	r := gin.Default()
+
+	// API Routes
+	api := r.Group("/api")
+	{
+		authRoutes := api.Group("/auth")
+		{
+			authRoutes.POST("/register", authHandler.Register)
+			authRoutes.POST("/login", authHandler.Login)
+			authRoutes.POST("/refresh", authHandler.RefreshTokens)
+			authRoutes.POST("/logout", authHandler.Logout)
+		}
+
+		protectedRoutes := api.Group("/protected")
+		protectedRoutes.Use(authMiddleware.RequireAuth())
+		{
+			protectedRoutes.GET("/profile", func(c *gin.Context) {
+				c.JSON(http.StatusOK, gin.H{"message": "This is a protected route"})
+			})
+		}
+	}
+
+	// Swagger Endpoint
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Health check (Liveness)
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "UP",
+		})
+	})
+
+	// Readiness check
+	r.GET("/ready", func(c *gin.Context) {
+		if err := pool.Ping(context.Background()); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status": "DOWN",
+				"error":  "Database not reachable",
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"status": "READY",
+		})
+	})
+
+	// Start server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Server starting on port %s", port)
+	if err := r.Run(":" + port); err != nil {
+		log.Fatalf("Failed to run server: %v", err)
+	}
+}
