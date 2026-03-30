@@ -5,6 +5,7 @@ import { getVacancy, applyToVacancy } from "@/services/vacancyService";
 import { Vacancy } from "@/types/vacancy";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { UserRole } from "@/types/auth";
 
 const VacancyDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -134,7 +135,7 @@ const VacancyDetailsPage: React.FC = () => {
 
           <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
             {user ? (
-              user.role === "applicant" ? (
+              user.role === UserRole.APPLICANT ? (
                 <button
                   onClick={handleApply}
                   disabled={applying || applied}

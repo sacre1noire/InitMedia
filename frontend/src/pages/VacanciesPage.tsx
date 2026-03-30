@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { getVacancies } from "@/services/vacancyService";
 import { Vacancy } from "@/types/vacancy";
-import { Loader2, Search, MapPin, Briefcase } from "lucide-react";
+import { Loader2, Search, MapPin } from "lucide-react";
 
 const VacanciesPage: React.FC = () => {
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);

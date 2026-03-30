@@ -1,27 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
-import { getCourses, getMyProgress } from "@/services/courseService";
-import { Course, CourseProgress } from "@/types/course";
+import { getCourses } from "@/services/courseService";
+import { Course } from "@/types/course";
 import { CourseCard } from "@/components/CourseCard";
-import { useAuth } from "@/contexts/AuthContext";
 
 const CoursesPage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [progress, setProgress] = useState<CourseProgress[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const [data, progressData] = await Promise.all([
-          getCourses(),
-          user ? getMyProgress() : Promise.resolve([]),
-        ]);
+        const data = await getCourses();
         setCourses(data);
-        setProgress(progressData);
       } catch (e) {
         console.error(e);
       } finally {
@@ -29,7 +21,7 @@ const CoursesPage: React.FC = () => {
       }
     };
     load();
-  }, [user]);
+  }, []);
 
   return (
     <Layout>

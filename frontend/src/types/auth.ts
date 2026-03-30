@@ -1,7 +1,7 @@
 export enum UserRole {
-    APPLICANT = 'applicant',
-    EMPLOYER = 'employer',
-    ADMIN = 'admin',
+    APPLICANT = 'APPLICANT',
+    EMPLOYER = 'EMPLOYER',
+    ADMIN = 'ADMIN',
 }
 
 export interface User {
@@ -15,8 +15,12 @@ export interface User {
 export interface TokenResponse {
     access_token: string;
     refresh_token: string;
-    token_type: string;
-    user: User;
+}
+
+export interface RegisterResponse {
+    id: number;
+    email: string;
+    role: UserRole;
 }
 
 export interface LoginCredentials {
@@ -27,5 +31,5 @@ export interface LoginCredentials {
 export interface RegisterData {
     email: string;
     password: string;
-    role?: UserRole;
+    role: UserRole;
 }

@@ -1,9 +1,9 @@
 import api from './api';
-import { LoginCredentials, RegisterData, TokenResponse, User } from '@/types/auth';
+import { LoginCredentials, RegisterData, RegisterResponse, TokenResponse, User } from '@/types/auth';
 
 export const authService = {
-  async register(data: RegisterData): Promise<TokenResponse> {
-    const response = await api.post<TokenResponse>('/api/auth/register', data);
+  async register(data: RegisterData): Promise<RegisterResponse> {
+    const response = await api.post<RegisterResponse>('/api/auth/register', data);
     return response.data;
   },
 
@@ -12,8 +12,8 @@ export const authService = {
     return response.data;
   },
 
-  async logout(): Promise<void> {
-    await api.post('/api/auth/logout');
+  async logout(refreshToken: string): Promise<void> {
+    await api.post('/api/auth/logout', { refresh_token: refreshToken });
   },
 
   async getCurrentUser(): Promise<User> {

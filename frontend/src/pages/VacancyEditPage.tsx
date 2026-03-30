@@ -24,7 +24,7 @@ const VacancyEditPage: React.FC = () => {
   const { id } = useParams(); // If id exists, it's edit mode
   const isEditMode = !!id;
   const navigate = useNavigate();
-  const { register, handleSubmit, reset, setValue } = useForm<VacancyForm>();
+  const { register, handleSubmit, setValue } = useForm<VacancyForm>();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

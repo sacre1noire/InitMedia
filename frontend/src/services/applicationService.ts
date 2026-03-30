@@ -1,6 +1,5 @@
 import api from "./api";
-import { Application, ApplicationListResponse } from "../types/application";
-import { ApplicationStatus } from "../types/application";
+import { Application } from "../types/application";
 
 export const getMyApplications = async () => {
   const response = await api.get<Application[]>("/api/applications/my");

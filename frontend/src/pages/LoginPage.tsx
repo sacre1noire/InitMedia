@@ -1,15 +1,15 @@
 import React from 'react';
+import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
-import { LoginCredentials } from '@/types/auth';
 
 const loginSchema = z.object({
     email: z.string().email('Введите корректный email'),
-    password: z.string().min(6, 'Минимальная длина пароля 6 символов'),
+    password: z.string().min(8, 'Минимальная длина пароля 8 символов'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -32,9 +32,21 @@ const LoginPage: React.FC = () => {
             setError(null);
             await login(data);
             navigate('/');
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            setError(err.response?.data?.detail || 'Неверный email или пароль');
+
+            if (axios.isAxiosError(err)) {
+                const apiError = err.response?.data?.error;
+                setError(apiError || 'Неверный email или пароль');
+                return;
+            }
+
+            if (err instanceof Error) {
+                setError(err.message || 'Неверный email или пароль');
+                return;
+            }
+
+            setError('Неверный email или пароль');
         }
     };
 

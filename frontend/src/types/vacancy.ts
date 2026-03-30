@@ -13,21 +13,22 @@ export enum VacancyStatus {
 
 export interface Company {
   id: number;
-  name: string; 
+  name: string;
   description?: string;
   website?: string;
   logo_url?: string;
+  city?: string;
 }
 
 export interface Vacancy {
   id: number;
   company_id: number;
-  company?: Company; // Added company object
+  company?: Company;
   title: string;
   description: string;
   requirements?: string;
   type: VacancyType;
-  specialization: string; // Enum string from backend
+  specialization: string;
   schedule?: string;
   salary_from?: number;
   salary_to?: number;
@@ -37,14 +38,7 @@ export interface Vacancy {
   status: VacancyStatus;
   created_at: string;
   updated_at?: string;
-}
   expires_at?: string;
-  company?: {
-    id: number;
-    name: string;
-    logo_url?: string;
-    city?: string;
-  };
 }
 
 export interface VacancyListResponse {

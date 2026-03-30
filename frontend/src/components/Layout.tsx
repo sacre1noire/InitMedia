@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/auth"; // Import UserRole
+import { getProfile } from "@/services/profileService";
 import {
   User,
   Menu,
@@ -12,6 +13,7 @@ import {
   Search,
   PlusCircle,
   BookOpen,
+  Building2,
 } from "lucide-react";
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({
@@ -20,8 +22,27 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
   const { logout, user } = useAuth();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
 
   const isActive = (path: string) => location.pathname === path;
+
+  React.useEffect(() => {
+    const loadAvatar = async () => {
+      if (!user || user.role !== UserRole.APPLICANT) {
+        setAvatarUrl(null);
+        return;
+      }
+
+      try {
+        const profile = await getProfile();
+        setAvatarUrl(profile.avatar_url || null);
+      } catch {
+        setAvatarUrl(null);
+      }
+    };
+
+    loadAvatar();
+  }, [user?.id, user?.role]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -66,8 +87,14 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
                   </>
                 )}
 
-                {user?.role === UserRole.EMPLOYER && (
+                {(user?.role === UserRole.EMPLOYER || user?.role === UserRole.ADMIN) && (
                   <>
+                    <Link
+                      to="/companies"
+                      className="nav-link flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                    >
+                      <Building2 className="w-4 h-4 mr-2" /> Компании
+                    </Link>
                     <Link
                       to="/employer/vacancies"
                       className="nav-link flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
@@ -102,8 +129,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
               )}
               <div className="relative group">
                 <button className="flex items-center space-x-2 text-sm text-gray-700 hover:text-primary-600">
-                  <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600">
-                    <User className="w-5 h-5" />
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center text-primary-600">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt="avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-5 h-5" />
+                    )}
                   </div>
                   <span className="font-medium">{user?.email}</span>
                 </button>
@@ -146,35 +181,53 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
           <div className="sm:hidden bg-white border-b border-gray-200">
             <div className="pt-2 pb-3 space-y-1">
               <Link
-                to="/"
-                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                  isActive("/")
-                    ? "bg-primary-50 border-primary-500 text-primary-700"
-                    : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-                }`}
+                to="/vacancies?type=vacancy"
+                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${location.pathname.startsWith("/vacancies")
+                  ? "bg-primary-50 border-primary-500 text-primary-700"
+                  : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                  }`}
               >
                 Вакансии
               </Link>
-              <Link
-                to="/internships"
-                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                  isActive("/internships")
+              {user?.role === UserRole.APPLICANT && (
+                <Link
+                  to="/vacancies?type=internship"
+                  className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                >
+                  Стажировки
+                </Link>
+              )}
+              {(user?.role === UserRole.EMPLOYER || user?.role === UserRole.ADMIN) && (
+                <Link
+                  to="/companies"
+                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${location.pathname.startsWith("/companies")
                     ? "bg-primary-50 border-primary-500 text-primary-700"
                     : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-                }`}
-              >
-                Стажировки
-              </Link>
+                    }`}
+                >
+                  Компании
+                </Link>
+              )}
               <Link
                 to="/profile"
-                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                  isActive("/profile")
-                    ? "bg-primary-50 border-primary-500 text-primary-700"
-                    : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-                }`}
+                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${isActive("/profile")
+                  ? "bg-primary-50 border-primary-500 text-primary-700"
+                  : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                  }`}
               >
                 Профиль
               </Link>
+              {avatarUrl && (
+                <div className="pl-3 pr-4 py-2">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200">
+                    <img
+                      src={avatarUrl}
+                      alt="avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
               <button
                 onClick={logout}
                 className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-red-600 hover:bg-red-50 hover:border-red-300"

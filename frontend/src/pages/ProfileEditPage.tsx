@@ -2,28 +2,83 @@ import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
-import { getProfile, updateProfile } from "@/services/profileService";
+import { getProfile, updateProfile, uploadAvatar } from "@/services/profileService";
 import {
-  Profile,
   ProfileUpdateData,
   Specialization,
   SkillLevel,
+  EducationLevel,
   EmploymentType,
   SchedulePreference,
 } from "@/types/profile";
 import { Loader2 } from "lucide-react";
 
+const specializationLabels: Record<Specialization, string> = {
+  [Specialization.WEB_ANALYST]: "Веб-аналитик",
+  [Specialization.DIGITAL_ANALYST]: "Digital-аналитик",
+  [Specialization.DATA_SCIENTIST_ADS]: "Data Scientist в рекламе",
+  [Specialization.ML_ENGINEER]: "ML-инженер",
+  [Specialization.FRONTEND_DEVELOPER]: "Frontend-разработчик",
+  [Specialization.BACKEND_DEVELOPER]: "Backend-разработчик",
+  [Specialization.MOBILE_DEVELOPER]: "Мобильный разработчик",
+  [Specialization.SEO_SPECIALIST]: "SEO-специалист",
+  [Specialization.CRM_MARKETOLOGIST]: "CRM-маркетолог",
+  [Specialization.TRAFFIC_MANAGER]: "Трафик-менеджер",
+  [Specialization.TARGETOLOGIST]: "Таргетолог",
+  [Specialization.UX_UI_DESIGNER]: "UX/UI-дизайнер",
+  [Specialization.PRODUCT_MANAGER_ADTECH]: "Product Manager в AdTech",
+  [Specialization.COPYWRITER]: "Копирайтер",
+  [Specialization.CREATIVE_EDITOR]: "Креативный редактор",
+  [Specialization.ART_DIRECTOR]: "Арт-директор",
+  [Specialization.SMM_MANAGER]: "SMM-менеджер",
+  [Specialization.PR_MANAGER]: "PR-менеджер",
+  [Specialization.INFLUENCER_MARKETER]: "Инфлюенс-маркетолог",
+  [Specialization.BRAND_MANAGER]: "Бренд-менеджер",
+  [Specialization.MEDIA_PLANNER]: "Медиапланер",
+  [Specialization.MEDIA_BUYER]: "Медиабайер",
+  [Specialization.AD_SHOOT_PRODUCER]: "Продюсер рекламных съемок",
+  [Specialization.VIDEO_EDITOR]: "Видеомонтажер",
+  [Specialization.MOTION_DESIGNER]: "Моушн-дизайнер",
+  [Specialization.ACCOUNT_MANAGER]: "Account-менеджер",
+};
+
+const skillLevelLabels: Record<SkillLevel, string> = {
+  [SkillLevel.NOVICE]: "Новичок",
+  [SkillLevel.MIDDLE]: "Средний уровень",
+  [SkillLevel.EXPERT]: "Эксперт",
+};
+
+const educationLabels: Record<EducationLevel, string> = {
+  [EducationLevel.BACHELOR]: "Бакалавриат",
+  [EducationLevel.MASTER]: "Магистратура",
+  [EducationLevel.PHD]: "Аспирантура",
+  [EducationLevel.SPECIALIST]: "Специалитет",
+};
+
+const employmentTypeLabels: Record<EmploymentType, string> = {
+  [EmploymentType.OFFICE]: "В офисе",
+  [EmploymentType.HYBRID]: "Гибрид",
+  [EmploymentType.REMOTE]: "Удаленно",
+};
+
+const scheduleLabels: Record<SchedulePreference, string> = {
+  [SchedulePreference.TWO_TWO]: "2/2",
+  [SchedulePreference.FIVE_TWO]: "5/2",
+  [SchedulePreference.THREE_THREE]: "3/3",
+};
+
 const ProfileEditPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | undefined>(undefined);
 
   const {
     register,
     handleSubmit,
     control,
     setValue,
-    formState: { errors },
   } = useForm<ProfileUpdateData>();
 
   useEffect(() => {
@@ -38,10 +93,19 @@ const ProfileEditPage: React.FC = () => {
         setValue("city", profile.city || "");
         setValue("telegram", profile.telegram || "");
         setValue("portfolio_url", profile.portfolio_url || "");
+        setValue("avatar_url", profile.avatar_url || "");
+        setValue("education_level", profile.education_level);
+        setValue("study_course", profile.study_course);
+        setValue("university", profile.university || "");
+        setValue("experience", profile.experience || "");
+        setValue("projects", profile.projects || "");
+        setValue("achievements", profile.achievements || "");
+        setValue("skills", profile.skills || "");
         setValue("specialization", profile.specialization);
         setValue("skill_level", profile.skill_level);
         setValue("employment_types", profile.employment_types || []);
         setValue("schedule_preferences", profile.schedule_preferences || []);
+        setAvatarPreview(profile.avatar_url);
       } catch (error) {
         console.error("Failed to load profile", error);
       } finally {
@@ -65,6 +129,26 @@ const ProfileEditPage: React.FC = () => {
     }
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const profile = await uploadAvatar(file);
+      setAvatarPreview(profile.avatar_url);
+      setValue("avatar_url", profile.avatar_url || "");
+    } catch (error) {
+      console.error("Failed to upload avatar", error);
+      alert("Ошибка при загрузке аватара");
+    } finally {
+      setAvatarUploading(false);
+      event.target.value = "";
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -84,6 +168,38 @@ const ProfileEditPage: React.FC = () => {
           onSubmit={handleSubmit(onSubmit)}
           className="space-y-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100"
         >
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Аватар
+            </label>
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs text-gray-500">Нет фото</span>
+                )}
+              </div>
+              <div>
+                <input
+                  id="avatar"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleAvatarUpload}
+                  className="block text-sm text-gray-700"
+                />
+                <p className="text-xs text-gray-500 mt-1">PNG/JPG/WEBP, до 5MB</p>
+                {avatarUploading && (
+                  <p className="text-xs text-primary-600 mt-1">Загрузка...</p>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -127,11 +243,26 @@ const ProfileEditPage: React.FC = () => {
                 <option value="">Выберите...</option>
                 {Object.values(Specialization).map((s) => (
                   <option key={s} value={s}>
-                    {s}
+                    {specializationLabels[s]}
                   </option>
                 ))}
               </select>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Образование
+              </label>
+              <select {...register("education_level")} className="input-field">
+                <option value="">Выберите...</option>
+                {Object.values(EducationLevel).map((level) => (
+                  <option key={level} value={level}>
+                    {educationLabels[level]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Уровень
@@ -140,10 +271,99 @@ const ProfileEditPage: React.FC = () => {
                 <option value="">Выберите...</option>
                 {Object.values(SkillLevel).map((l) => (
                   <option key={l} value={l}>
-                    {l}
+                    {skillLevelLabels[l]}
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Курс обучения
+              </label>
+              <select
+                {...register("study_course", {
+                  setValueAs: (value) => {
+                    if (value === "") {
+                      return undefined;
+                    }
+                    const parsed = Number(value);
+                    return Number.isNaN(parsed) ? undefined : parsed;
+                  },
+                })}
+                className="input-field"
+              >
+                <option value="">Не выбрано</option>
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+                <option value={4}>4</option>
+                <option value={5}>5</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              ВУЗ
+            </label>
+            <input
+              {...register("university")}
+              className="input-field"
+              placeholder="Например: МГУ"
+              maxLength={64}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Опыт
+              </label>
+              <input
+                {...register("experience")}
+                className="input-field"
+                placeholder="Кратко об опыте"
+                maxLength={64}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Проекты
+              </label>
+              <input
+                {...register("projects")}
+                className="input-field"
+                placeholder="Кратко о проектах"
+                maxLength={64}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Достижения
+              </label>
+              <input
+                {...register("achievements")}
+                className="input-field"
+                placeholder="Кратко о достижениях"
+                maxLength={64}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Навыки
+              </label>
+              <input
+                {...register("skills")}
+                className="input-field"
+                placeholder="Например: SQL, Python"
+                maxLength={64}
+              />
             </div>
           </div>
 
@@ -176,7 +396,9 @@ const ProfileEditPage: React.FC = () => {
                           }}
                           className="rounded text-primary-600 focus:ring-primary-500"
                         />
-                        <span className="text-sm text-gray-700">{type}</span>
+                        <span className="text-sm text-gray-700">
+                          {employmentTypeLabels[type]}
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -214,7 +436,9 @@ const ProfileEditPage: React.FC = () => {
                           }}
                           className="rounded text-primary-600 focus:ring-primary-500"
                         />
-                        <span className="text-sm text-gray-700">{pref}</span>
+                        <span className="text-sm text-gray-700">
+                          {scheduleLabels[pref]}
+                        </span>
                       </label>
                     ))}
                   </div>

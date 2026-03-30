@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout } from '@/components/Layout';
-import { Video, Star, Clock, MapPin, Users, Target } from 'lucide-react';
+import { Video, Clock, MapPin, Users, Target } from 'lucide-react';
 
 const mockVacancies = [
   {

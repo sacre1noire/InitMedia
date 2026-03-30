@@ -1,16 +1,30 @@
-FROM python:3.11-slim
+# Сборка внутри Docker
+FROM golang:1.26-bookworm AS builder
 
 WORKDIR /app
 
-# Установка зависимостей
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Копируем зависимости
+COPY go.mod go.sum ./
+RUN go mod download
 
-# Копирование кода
+# Копируем исходный код
 COPY . .
 
-# Порт
-EXPOSE 8000
+# Собираем СТАТИЧЕСКИЙ бинарник
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/server ./cmd/api/main.go
 
-# Запуск приложения
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Финальный образ (используем Debian Slim для совместимости)
+FROM debian:bookworm-slim
+WORKDIR /app
+
+# Устанавливаем базовые сертификаты
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Копируем только бинарник из билдера
+COPY --from=builder /app/server /app/server
+
+# Права на запуск
+RUN chmod +x /app/server
+
+# Запуск
+ENTRYPOINT ["/app/server"]
