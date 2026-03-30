@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { getMyVacancies, deleteVacancy } from "@/services/employerService";
 import { Vacancy } from "@/types/vacancy";

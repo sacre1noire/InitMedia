@@ -1,1 +1,28 @@
-node_modules
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Go
+/bin/
+/tmp_bin
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+vendor/
+coverage.out
+
+# Env / secrets
+.env
+backend/.env
+
+# Build artifacts
+dist/
+*.log
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store

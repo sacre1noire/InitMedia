@@ -8,9 +8,7 @@ import {
   ArrowLeft,
   CheckCircle,
   PlayCircle,
-  FileText,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 
 const LessonPage: React.FC = () => {
   const { id, lessonId } = useParams<{ id: string; lessonId: string }>();
@@ -19,7 +17,6 @@ const LessonPage: React.FC = () => {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
-  const { user } = useAuth();
 
   useEffect(() => {
     const load = async () => {

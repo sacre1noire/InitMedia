@@ -1,16 +1,18 @@
 import React from 'react';
+import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { UserRole } from '@/types/auth';
 
 const registerSchema = z.object({
     email: z.string().email('Введите корректный email'),
-    password: z.string().min(6, 'Минимальная длина пароля 6 символов'),
-    confirmPassword: z.string().min(6, 'Минимальная длина пароля 6 символов'),
-    role: z.enum(["applicant", "employer"]),
+    password: z.string().min(8, 'Минимальная длина пароля 8 символов'),
+    confirmPassword: z.string().min(8, 'Минимальная длина пароля 8 символов'),
+    role: z.enum([UserRole.APPLICANT, UserRole.EMPLOYER]),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Пароли не совпадают",
     path: ["confirmPassword"],
@@ -30,18 +32,34 @@ const RegisterPage: React.FC = () => {
     } = useForm<RegisterForm>({
         resolver: zodResolver(registerSchema),
         defaultValues: {
-            role: "applicant"
+            role: UserRole.APPLICANT
         }
     });
 
     const onSubmit = async (data: RegisterForm) => {
         try {
             setError(null);
-            await registerUser(data);
+            await registerUser({
+                email: data.email,
+                password: data.password,
+                role: data.role,
+            });
             navigate('/');
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            setError(err.response?.data?.detail || 'Ошибка при регистрации');
+
+            if (axios.isAxiosError(err)) {
+                const apiError = err.response?.data?.error;
+                setError(apiError || 'Ошибка при регистрации');
+                return;
+            }
+
+            if (err instanceof Error) {
+                setError(err.message || 'Ошибка при регистрации');
+                return;
+            }
+
+            setError('Ошибка при регистрации');
         }
     };
 
@@ -88,8 +106,8 @@ const RegisterPage: React.FC = () => {
                                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                                     {...register('role')}
                                 >
-                                    <option value="applicant">Соискатель</option>
-                                    <option value="employer">Работодатель</option>
+                                    <option value={UserRole.APPLICANT}>Соискатель</option>
+                                    <option value={UserRole.EMPLOYER}>Работодатель</option>
                                 </select>
                                 {errors.role && (
                                     <p className="mt-2 text-sm text-red-600">{errors.role.message}</p>

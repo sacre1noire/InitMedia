@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"backend/internal/transport/http/dto"
+	"backend/internal/transport/http/middleware"
 	usecase "backend/internal/usecase/user"
 
 	"github.com/gin-gonic/gin"
@@ -142,4 +143,35 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
+}
+
+// Me godoc
+// @Summary      Get current user
+// @Description  Returns current authenticated user profile
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  dto.MeResponse
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /api/auth/me [get]
+func (h *AuthHandler) Me(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	resp, err := h.authUseCase.GetCurrentUser(c.Request.Context(), userID)
+	if err != nil {
+		if err == usecase.ErrUserNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }

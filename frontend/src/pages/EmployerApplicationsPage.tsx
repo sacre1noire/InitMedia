@@ -5,7 +5,6 @@ import {
   updateApplicationStatus,
 } from "@/services/employerService";
 import { Application, ApplicationStatus } from "@/types/application";
-import { CheckCircle, XCircle, Clock, FileText } from "lucide-react";
 
 const EmployerApplicationsPage: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -34,19 +33,6 @@ const EmployerApplicationsPage: React.FC = () => {
       );
     } catch (error) {
       console.error("Failed to update status", error);
-    }
-  };
-
-  const getStatusIcon = (status: ApplicationStatus) => {
-    switch (status) {
-      case ApplicationStatus.ACCEPTED:
-        return <CheckCircle className="text-green-500" />;
-      case ApplicationStatus.REJECTED:
-        return <XCircle className="text-red-500" />;
-      case ApplicationStatus.VIEWED:
-        return <FileText className="text-blue-500" />;
-      default:
-        return <Clock className="text-gray-400" />;
     }
   };
 
@@ -92,7 +78,7 @@ const EmployerApplicationsPage: React.FC = () => {
                             aria-hidden="true"
                           />
                           {app.applicant?.email ||
-                            `Кандидат #${app.applicant_id}`}
+                            `Кандидат #${app.applicant?.id ?? "unknown"}`}
                         </p>
                       </div>
                       <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">

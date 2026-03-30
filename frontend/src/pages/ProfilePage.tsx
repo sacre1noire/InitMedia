@@ -15,6 +15,7 @@ import {
 import { getProfile } from "@/services/profileService";
 import { getCandidate } from "@/services/employerService";
 import { Profile } from "@/types/profile";
+import { UserRole } from "@/types/auth";
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
@@ -31,9 +32,12 @@ const ProfilePage: React.FC = () => {
         if (id) {
           // Viewing another user's profile (candidate)
           data = await getCandidate(parseInt(id));
-        } else {
-          // Viewing own profile
+        } else if (user?.role === UserRole.APPLICANT) {
+          // Applicant own profile is stored in applicant_profiles
           data = await getProfile();
+        } else {
+          // Employer/admin own profile does not use applicant profile endpoint
+          data = null;
         }
         setProfile(data);
       } catch (error) {
@@ -43,7 +47,7 @@ const ProfilePage: React.FC = () => {
       }
     };
     loadProfile();
-  }, [id]);
+  }, [id, user?.role]);
 
   if (!user) {
     return (
@@ -60,7 +64,7 @@ const ProfilePage: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">
             {isOwnProfile ? "Мой профиль" : "Профиль кандидата"}
           </h1>
-          {isOwnProfile && user.role === "applicant" && (
+          {isOwnProfile && user.role === UserRole.APPLICANT && (
             <Link
               to="/profile/edit"
               className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition"
@@ -74,8 +78,16 @@ const ProfilePage: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-primary-600 to-indigo-600 px-6 py-8 text-white">
             <div className="flex items-center space-x-4">
-              <div className="bg-white/20 p-3 rounded-full backdrop-blur-sm">
-                <User className="w-12 h-12 text-white" />
+              <div className="w-20 h-20 rounded-full overflow-hidden bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-12 h-12 text-white" />
+                )}
               </div>
               <div>
                 <h2 className="text-2xl font-bold">
@@ -115,7 +127,7 @@ const ProfilePage: React.FC = () => {
         </div>
 
         {/* Applicant Profile Details */}
-        {(user.role === "applicant" || !isOwnProfile) && (
+        {(user.role === UserRole.APPLICANT || !isOwnProfile) && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
             {loading ? (
               <div className="text-center">Загрузка данных профиля...</div>
@@ -142,6 +154,40 @@ const ProfilePage: React.FC = () => {
                           Уровень
                         </p>
                         <p className="text-base">{profile.skill_level}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.education_level && (
+                    <div className="flex items-start space-x-3 text-gray-700">
+                      <GraduationCap className="w-5 h-5 text-gray-400 mt-1" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">
+                          Образование
+                        </p>
+                        <p className="text-base">{profile.education_level}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.study_course && (
+                    <div className="flex items-start space-x-3 text-gray-700">
+                      <GraduationCap className="w-5 h-5 text-gray-400 mt-1" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">
+                          Курс
+                        </p>
+                        <p className="text-base">{profile.study_course}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.university && (
+                    <div className="flex items-start space-x-3 text-gray-700">
+                      <GraduationCap className="w-5 h-5 text-gray-400 mt-1" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">ВУЗ</p>
+                        <p className="text-base">{profile.university}</p>
                       </div>
                     </div>
                   )}
@@ -217,15 +263,45 @@ const ProfilePage: React.FC = () => {
                     </p>
                   </div>
                 )}
+
+                {profile.experience && (
+                  <div className="pt-4 border-t border-gray-100">
+                    <h4 className="font-medium text-gray-900 mb-2">Опыт</h4>
+                    <p className="text-gray-600">{profile.experience}</p>
+                  </div>
+                )}
+
+                {profile.projects && (
+                  <div className="pt-4 border-t border-gray-100">
+                    <h4 className="font-medium text-gray-900 mb-2">Проекты</h4>
+                    <p className="text-gray-600">{profile.projects}</p>
+                  </div>
+                )}
+
+                {profile.achievements && (
+                  <div className="pt-4 border-t border-gray-100">
+                    <h4 className="font-medium text-gray-900 mb-2">
+                      Достижения
+                    </h4>
+                    <p className="text-gray-600">{profile.achievements}</p>
+                  </div>
+                )}
+
+                {profile.skills && (
+                  <div className="pt-4 border-t border-gray-100">
+                    <h4 className="font-medium text-gray-900 mb-2">Навыки</h4>
+                    <p className="text-gray-600">{profile.skills}</p>
+                  </div>
+                )}
               </>
             ) : (
               <div className="text-center py-8">
                 <p className="text-gray-500 mb-4">
-                  {isOwnProfile && user.role === "applicant"
+                  {isOwnProfile && user.role === UserRole.APPLICANT
                     ? "Профиль еще не заполнен"
                     : "Профиль не найден или скрыт"}
                 </p>
-                {isOwnProfile && user.role === "applicant" && (
+                {isOwnProfile && user.role === UserRole.APPLICANT && (
                   <Link
                     to="/profile/edit"
                     className="inline-block bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"

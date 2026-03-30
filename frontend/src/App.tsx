@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -17,6 +16,9 @@ import CandidateSearchPage from "@/pages/CandidateSearchPage";
 import CoursesPage from "@/pages/CoursesPage";
 import CourseDetailsPage from "@/pages/CourseDetailsPage";
 import LessonPage from "@/pages/LessonPage";
+import CompaniesPage from "@/pages/CompaniesPage";
+import CompanyProfilePage from "@/pages/CompanyProfilePage";
+import CompanyEditPage from "@/pages/CompanyEditPage";
 
 function App() {
   return (
@@ -66,6 +68,38 @@ function App() {
             element={
               <AuthGuard>
                 <VacancyDetailsPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/companies"
+            element={
+              <AuthGuard>
+                <CompaniesPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/companies/:id"
+            element={
+              <AuthGuard>
+                <CompanyProfilePage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/companies/:id/edit"
+            element={
+              <AuthGuard>
+                <CompanyEditPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/companies/new"
+            element={
+              <AuthGuard>
+                <CompanyEditPage />
               </AuthGuard>
             }
           />

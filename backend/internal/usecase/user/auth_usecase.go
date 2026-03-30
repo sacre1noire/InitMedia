@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"backend/internal/domain/user"
@@ -17,6 +18,7 @@ var (
 	ErrEmailAlreadyExists = errors.New("email already in use")
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrInvalidSession     = errors.New("invalid or expired session")
+	ErrUserNotFound       = errors.New("user not found")
 )
 
 type AuthUseCase struct {
@@ -54,10 +56,11 @@ func (u *AuthUseCase) Register(ctx context.Context, req dto.RegisterRequest) (*d
 	}
 
 	// 3. Создаем сущность
+	normalizedRole := user.Role(strings.ToUpper(req.Role))
 	newUser := &user.User{
 		Email:          req.Email,
 		HashedPassword: string(hashedBytes),
-		Role:           user.Role(req.Role),
+		Role:           normalizedRole,
 		IsActive:       true, // По умолчанию аккаунт активен (можно изменить логику потом)
 	}
 
@@ -120,6 +123,24 @@ func (u *AuthUseCase) RefreshTokens(ctx context.Context, req dto.RefreshRequest)
 
 func (u *AuthUseCase) Logout(ctx context.Context, refreshToken string) error {
 	return u.sessionRepo.DeleteSession(ctx, refreshToken)
+}
+
+func (u *AuthUseCase) GetCurrentUser(ctx context.Context, userID int64) (*dto.MeResponse, error) {
+	usr, err := u.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if usr == nil {
+		return nil, ErrUserNotFound
+	}
+
+	return &dto.MeResponse{
+		ID:        usr.ID,
+		Email:     usr.Email,
+		Role:      usr.Role,
+		IsActive:  usr.IsActive,
+		CreatedAt: usr.CreatedAt,
+	}, nil
 }
 
 // Вспомогательный метод для генерации access + refresh и сохранения в БД сессий

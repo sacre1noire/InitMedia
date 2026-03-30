@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Course } from "@/types/course";
-import { Clock, Book, CheckCircle } from "lucide-react";
+import { Clock, Book } from "lucide-react";
 
 interface CourseCardProps {
   course: Course;

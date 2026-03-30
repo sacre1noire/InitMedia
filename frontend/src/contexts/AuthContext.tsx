@@ -29,54 +29,85 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const clearAuthStorage = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+  };
+
+  const persistTokens = (accessToken: string, refreshToken: string) => {
+    localStorage.setItem('access_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+  };
+
   useEffect(() => {
-    // Проверяем наличие токена при монтировании
+    // Восстановление сессии при монтировании
     const initAuth = async () => {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        try {
-          const userData = await authService.getCurrentUser();
-          setUser(userData);
-        } catch (error) {
-          // Токен невалиден, очищаем
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('user');
-        }
+      const accessToken = localStorage.getItem('access_token');
+      const refreshToken = localStorage.getItem('refresh_token');
+
+      if (!accessToken && !refreshToken) {
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
+
+      try {
+        if (!accessToken && refreshToken) {
+          const refreshed = await authService.refreshToken(refreshToken);
+          persistTokens(refreshed.access_token, refreshed.refresh_token);
+        }
+
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      } catch {
+        clearAuthStorage();
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     initAuth();
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
-    const response = await authService.login(credentials);
-    localStorage.setItem('access_token', response.access_token);
-    localStorage.setItem('refresh_token', response.refresh_token);
-    localStorage.setItem('user', JSON.stringify(response.user));
-    setUser(response.user);
+    const tokenResponse = await authService.login(credentials);
+    persistTokens(tokenResponse.access_token, tokenResponse.refresh_token);
+
+    const userData = await authService.getCurrentUser();
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const register = async (data: RegisterData) => {
-    const response = await authService.register(data);
-    localStorage.setItem('access_token', response.access_token);
-    localStorage.setItem('refresh_token', response.refresh_token);
-    localStorage.setItem('user', JSON.stringify(response.user));
-    setUser(response.user);
+    await authService.register(data);
+
+    // Backend registration only creates account, then we perform login.
+    const tokenResponse = await authService.login({
+      email: data.email,
+      password: data.password,
+    });
+    persistTokens(tokenResponse.access_token, tokenResponse.refresh_token);
+
+    const userData = await authService.getCurrentUser();
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const logout = async () => {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-      setUser(null);
+    const refreshToken = localStorage.getItem('refresh_token');
+
+    if (refreshToken) {
+      try {
+        await authService.logout(refreshToken);
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
     }
+
+    clearAuthStorage();
+    setUser(null);
   };
 
   const value: AuthContextType = {
