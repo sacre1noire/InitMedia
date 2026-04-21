@@ -174,25 +174,32 @@ npm run dev
 
 ### Создание новой миграции
 ```bash
-make migration msg="описание изменений"
-# или
-docker-compose exec backend alembic revision --autogenerate -m "описание"
-# или локально
-cd backend && alembic revision --autogenerate -m "описание"
+cd backend/migrations
+
+# пример: следующая после 000005
+touch 000006_add_some_table.up.sql
 ```
 
 ### Применение миграций
 ```bash
-make migrate
-# или
-docker-compose exec backend alembic upgrade head
-# или локально
-cd backend && alembic upgrade head
+cd /home/sacre1noire/Projects/InitMedia
+
+# применить один файл
+docker exec -i initmedia_db \
+  psql -U postgres -d initmedia -v ON_ERROR_STOP=1 -f /dev/stdin \
+  < backend/migrations/000006_add_some_table.up.sql
+
+# применить все миграции по порядку
+for f in backend/migrations/*.up.sql; do
+  echo "Applying $f"
+  docker exec -i initmedia_db \
+    psql -U postgres -d initmedia -v ON_ERROR_STOP=1 -f /dev/stdin < "$f"
+done
 ```
 
-### Откат миграции
+### Проверка
 ```bash
-docker-compose exec backend alembic downgrade -1
+docker exec -it initmedia_db psql -U postgres -d initmedia -c "\\dt"
 ```
 
 ## Тестирование
