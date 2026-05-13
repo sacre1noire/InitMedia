@@ -69,6 +69,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
                       <Briefcase className="w-4 h-4 mr-2" /> Вакансии
                     </Link>
                     <Link
+                      to="/resumes"
+                      className="nav-link flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                    >
+                      <FileText className="w-4 h-4 mr-2" /> Резюме
+                    </Link>
+                    <Link
                       to="/courses"
                       className="nav-link flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
                     >
@@ -91,23 +97,32 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
 
                 {(user?.role === UserRole.EMPLOYER || user?.role === UserRole.ADMIN) && (
                   <>
-                    <Link
-                      to="/companies"
-                      className="nav-link flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
-                    >
-                      <Building2 className="w-4 h-4 mr-2" /> Компании
-                    </Link>
-                    <Link
-                      to="/courses"
-                      className="nav-link flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
-                    >
-                      <BookOpen className="w-4 h-4 mr-2" /> Курсы
-                    </Link>
+                    {user?.role === UserRole.EMPLOYER ? (
+                      <Link
+                        to="/employer/company"
+                        className="nav-link flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                      >
+                        <Building2 className="w-4 h-4 mr-2" /> Моя компания
+                      </Link>
+                    ) : (
+                      <Link
+                        to="/companies"
+                        className="nav-link flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                      >
+                        <Building2 className="w-4 h-4 mr-2" /> Компании
+                      </Link>
+                    )}
                     <Link
                       to="/employer/vacancies"
                       className="nav-link flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
                     >
                       <Briefcase className="w-4 h-4 mr-2" /> Мои вакансии
+                    </Link>
+                    <Link
+                      to="/employer/internships"
+                      className="nav-link flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                    >
+                      <FileText className="w-4 h-4 mr-2" /> Мои стажировки
                     </Link>
                     <Link
                       to="/employer/applications"
@@ -197,15 +212,28 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
               >
                 Вакансии
               </Link>
-              <Link
-                to="/courses"
-                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${location.pathname.startsWith("/courses")
-                  ? "bg-primary-50 border-primary-500 text-primary-700"
-                  : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-                  }`}
-              >
-                Курсы
-              </Link>
+              {user?.role === UserRole.APPLICANT && (
+                <Link
+                  to="/courses"
+                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${location.pathname.startsWith("/courses")
+                    ? "bg-primary-50 border-primary-500 text-primary-700"
+                    : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                    }`}
+                >
+                  Курсы
+                </Link>
+              )}
+              {user?.role === UserRole.APPLICANT && (
+                <Link
+                  to="/resumes"
+                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${location.pathname.startsWith("/resumes")
+                    ? "bg-primary-50 border-primary-500 text-primary-700"
+                    : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                    }`}
+                >
+                  Резюме
+                </Link>
+              )}
               {user?.role === UserRole.APPLICANT && (
                 <Link
                   to="/vacancies?type=internship"
@@ -215,14 +243,37 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
                 </Link>
               )}
               {(user?.role === UserRole.EMPLOYER || user?.role === UserRole.ADMIN) && (
+                user?.role === UserRole.EMPLOYER ? (
+                  <Link
+                    to="/employer/company"
+                    className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${location.pathname.startsWith("/employer/company")
+                      ? "bg-primary-50 border-primary-500 text-primary-700"
+                      : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                      }`}
+                  >
+                    Моя компания
+                  </Link>
+                ) : (
+                  <Link
+                    to="/companies"
+                    className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${location.pathname.startsWith("/companies")
+                      ? "bg-primary-50 border-primary-500 text-primary-700"
+                      : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                      }`}
+                  >
+                    Компании
+                  </Link>
+                )
+              )}
+              {(user?.role === UserRole.EMPLOYER || user?.role === UserRole.ADMIN) && (
                 <Link
-                  to="/companies"
-                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${location.pathname.startsWith("/companies")
+                  to="/employer/internships"
+                  className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${location.pathname.startsWith("/employer/internships")
                     ? "bg-primary-50 border-primary-500 text-primary-700"
                     : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
                     }`}
                 >
-                  Компании
+                  Мои стажировки
                 </Link>
               )}
               <Link

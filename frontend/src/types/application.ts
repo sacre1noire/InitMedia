@@ -13,7 +13,9 @@ export interface Application {
   status: ApplicationStatus;
   created_at: string;
   updated_at?: string;
+  cover_letter?: string;
   vacancy: Vacancy;
   applicant?: User; // Available for employer
   resume_id?: number;
+  resume_title?: string;
 }

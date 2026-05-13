@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	profileDomain "backend/internal/domain/profile"
 
@@ -163,4 +165,51 @@ func (r *ApplicantProfileRepo) UpsertByUserID(ctx context.Context, p *profileDom
 	}
 
 	return updated, nil
+}
+
+func (r *ApplicantProfileRepo) SearchCandidates(ctx context.Context, query string, limit int32, offset int32) ([]*profileDomain.CandidateSummary, error) {
+	base := `
+		SELECT p.user_id,
+		       trim(concat_ws(' ', p.first_name, p.last_name)) AS full_name,
+		       u.email,
+		       p.specialization,
+		       p.skill_level,
+		       p.city
+		FROM applicant_profiles p
+		JOIN users u ON u.id = p.user_id
+		WHERE u.role = 'APPLICANT'
+	`
+	args := make([]interface{}, 0)
+	argPos := 1
+	if strings.TrimSpace(query) != "" {
+		needle := "%" + strings.TrimSpace(query) + "%"
+		base += fmt.Sprintf(" AND (p.first_name ILIKE $%d OR p.last_name ILIKE $%d OR u.email ILIKE $%d OR p.skills ILIKE $%d OR p.specialization ILIKE $%d OR p.city ILIKE $%d)", argPos, argPos, argPos, argPos, argPos, argPos)
+		args = append(args, needle)
+		argPos++
+	}
+
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	base += fmt.Sprintf(" ORDER BY p.user_id DESC LIMIT $%d OFFSET $%d", argPos, argPos+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.Query(ctx, base, args...)
+	if err != nil {
+		return nil, fmt.Errorf("search candidates: %w", err)
+	}
+	defer rows.Close()
+
+	items := make([]*profileDomain.CandidateSummary, 0)
+	for rows.Next() {
+		item := &profileDomain.CandidateSummary{}
+		if err := rows.Scan(&item.ID, &item.FullName, &item.Email, &item.Specialization, &item.SkillLevel, &item.City); err != nil {
+			return nil, fmt.Errorf("search candidates scan: %w", err)
+		}
+		items = append(items, item)
+	}
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("search candidates rows: %w", rows.Err())
+	}
+	return items, nil
 }

@@ -1,37 +1,59 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Layout } from "@/components/Layout";
 import { createVacancy, updateVacancy } from "@/services/employerService";
 import { getVacancy } from "@/services/vacancyService";
-import { VacancyType, VacancyStatus } from "@/types/vacancy";
+import { VacancyType } from "@/types/vacancy";
 
 interface VacancyForm {
   title: string;
   description: string;
   requirements: string;
+  duties: string;
   type: VacancyType;
   specialization: string;
+  schedule: string;
   salary_from?: number;
   salary_to?: number;
   is_salary_hidden: boolean;
   city?: string;
   is_remote: boolean;
-  status: VacancyStatus;
+  expires_at: string;
 }
 
 const VacancyEditPage: React.FC = () => {
   const { id } = useParams(); // If id exists, it's edit mode
   const isEditMode = !!id;
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { register, handleSubmit, setValue } = useForm<VacancyForm>();
+  const { register, handleSubmit, setValue } = useForm<VacancyForm>({
+    defaultValues: {
+      duties: "",
+      schedule: "full_time",
+      expires_at: "",
+      requirements: "",
+      is_salary_hidden: false,
+      is_remote: false,
+      type: VacancyType.VACANCY,
+      specialization: "backend",
+    },
+  });
   const [loading, setLoading] = useState(false);
+  const isInternshipRoute = location.pathname.startsWith("/employer/internships");
 
   useEffect(() => {
     if (isEditMode && id) {
       loadVacancy(parseInt(id));
+      return;
     }
-  }, [id]);
+
+    const typeParam = searchParams.get("type");
+    if (typeParam === VacancyType.INTERNSHIP || isInternshipRoute) {
+      setValue("type", VacancyType.INTERNSHIP);
+    }
+  }, [id, isEditMode, isInternshipRoute, searchParams, setValue]);
 
   const loadVacancy = async (vacancyId: number) => {
     try {
@@ -40,14 +62,19 @@ const VacancyEditPage: React.FC = () => {
       setValue("title", data.title);
       setValue("description", data.description);
       setValue("requirements", data.requirements || "");
+      setValue("duties", data.duties || "");
       setValue("type", data.type);
       setValue("specialization", data.specialization);
+      setValue("schedule", data.schedule || "full_time");
       setValue("salary_from", data.salary_from);
       setValue("salary_to", data.salary_to);
       setValue("is_salary_hidden", data.is_salary_hidden);
       setValue("city", data.city);
       setValue("is_remote", data.is_remote);
-      setValue("status", data.status);
+      setValue(
+        "expires_at",
+        data.expires_at ? data.expires_at.slice(0, 16) : "",
+      );
     } catch (error) {
       console.error("Failed to load vacancy", error);
     }
@@ -56,20 +83,49 @@ const VacancyEditPage: React.FC = () => {
   const onSubmit = async (data: VacancyForm) => {
     setLoading(true);
     try {
-      // Need to add company_id which is handled by backend from token
-      // But API needs payload matching schema
-      // Assuming backend extracts company from user
-      const payload = {
-        ...data,
-        schedule: "full_time", // hardcode for now or add field
+      let expiresISO: string | undefined;
+      if (data.expires_at?.trim()) {
+        const d = new Date(data.expires_at);
+        if (!Number.isNaN(d.getTime())) {
+          expiresISO = d.toISOString();
+        }
+      }
+
+      const parseSalary = (v: unknown): number | undefined => {
+        if (v === "" || v === null || v === undefined) return undefined;
+        const n = typeof v === "number" ? v : Number(String(v).trim());
+        return Number.isFinite(n) ? Math.trunc(n) : undefined;
       };
+      const salaryFrom = parseSalary(data.salary_from);
+      const salaryTo = parseSalary(data.salary_to);
+
+      const payload: Record<string, unknown> = {
+        title: data.title.trim(),
+        description: data.description.trim(),
+        type: data.type,
+        specialization: data.specialization,
+        status: "active",
+        is_salary_hidden: data.is_salary_hidden,
+        is_remote: data.is_remote,
+        requirements: data.requirements?.trim() || undefined,
+        duties: data.duties?.trim() || undefined,
+        schedule: data.schedule?.trim() || undefined,
+        city: data.city?.trim() || undefined,
+        expires_at: expiresISO,
+      };
+      if (salaryFrom !== undefined) payload.salary_from = salaryFrom;
+      if (salaryTo !== undefined) payload.salary_to = salaryTo;
 
       if (isEditMode && id) {
         await updateVacancy(parseInt(id), payload);
       } else {
-        await createVacancy({ ...payload, company_id: 0 }); // company_id ignored by backend
+        await createVacancy(payload);
       }
-      navigate("/employer/vacancies");
+      const targetList =
+        data.type === VacancyType.INTERNSHIP || isInternshipRoute
+          ? "/employer/internships"
+          : "/employer/vacancies";
+      navigate(targetList);
     } catch (error) {
       console.error("Failed to save vacancy", error);
       alert("Ошибка при сохранении вакансии");
@@ -82,7 +138,11 @@ const VacancyEditPage: React.FC = () => {
     <Layout>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">
-          {isEditMode ? "Редактирование вакансии" : "Создание вакансии"}
+          {isEditMode
+            ? "Редактирование вакансии"
+            : isInternshipRoute
+              ? "Создание стажировки"
+              : "Создание вакансии"}
         </h1>
 
         <form
@@ -117,6 +177,39 @@ const VacancyEditPage: React.FC = () => {
             <textarea
               {...register("requirements")}
               rows={3}
+              className="input-field mt-1 block w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Обязанности
+            </label>
+            <textarea
+              {...register("duties")}
+              rows={3}
+              className="input-field mt-1 block w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              График (код для фильтров: full_time, hybrid, remote…)
+            </label>
+            <input
+              {...register("schedule")}
+              className="input-field mt-1 block w-full"
+              placeholder="full_time"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Дата окончания публикации
+            </label>
+            <input
+              type="datetime-local"
+              {...register("expires_at")}
               className="input-field mt-1 block w-full"
             />
           </div>

@@ -30,28 +30,56 @@ SET website_url = website
 WHERE website_url IS NULL AND website IS NOT NULL;
 
 -- Convert size enum from legacy buckets to requested range values.
-ALTER TABLE companies ADD COLUMN IF NOT EXISTS size_tmp company_size_range;
-UPDATE companies
-SET size_tmp = CASE
-    WHEN size::text = 'SMALL' THEN '1-10'::company_size_range
-    WHEN size::text = 'MEDIUM' THEN '11-50'::company_size_range
-    WHEN size::text = 'LARGE' THEN '51-200'::company_size_range
-    ELSE NULL
-END
-WHERE size_tmp IS NULL;
-ALTER TABLE companies DROP COLUMN IF EXISTS size;
-ALTER TABLE companies RENAME COLUMN size_tmp TO size;
+DO $$
+DECLARE
+    size_type text;
+BEGIN
+    SELECT udt_name INTO size_type
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'companies' AND column_name = 'size';
+
+    IF size_type = 'companysize' THEN
+        ALTER TABLE companies ADD COLUMN IF NOT EXISTS size_tmp company_size_range;
+        UPDATE companies
+        SET size_tmp = CASE
+            WHEN size::text = 'SMALL' THEN '1-10'::company_size_range
+            WHEN size::text = 'MEDIUM' THEN '11-50'::company_size_range
+            WHEN size::text = 'LARGE' THEN '51-200'::company_size_range
+            ELSE NULL
+        END
+        WHERE size_tmp IS NULL;
+        ALTER TABLE companies DROP COLUMN IF EXISTS size;
+        ALTER TABLE companies RENAME COLUMN size_tmp TO size;
+    END IF;
+END $$;
 
 -- Convert boolean is_verified to moderation status enum.
-ALTER TABLE companies ADD COLUMN IF NOT EXISTS is_verified_tmp company_verification_status;
+DO $$
+DECLARE
+    verified_type text;
+BEGIN
+    SELECT data_type INTO verified_type
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'companies' AND column_name = 'is_verified';
+
+    IF verified_type = 'boolean' THEN
+        ALTER TABLE companies ADD COLUMN IF NOT EXISTS is_verified_tmp company_verification_status;
+        UPDATE companies
+        SET is_verified_tmp = CASE
+            WHEN is_verified = TRUE THEN 'verified'::company_verification_status
+            ELSE 'pending'::company_verification_status
+        END
+        WHERE is_verified_tmp IS NULL;
+        ALTER TABLE companies DROP COLUMN IF EXISTS is_verified;
+        ALTER TABLE companies RENAME COLUMN is_verified_tmp TO is_verified;
+    ELSIF verified_type IS NULL THEN
+        ALTER TABLE companies ADD COLUMN IF NOT EXISTS is_verified company_verification_status;
+    END IF;
+END $$;
+
 UPDATE companies
-SET is_verified_tmp = CASE
-    WHEN is_verified = TRUE THEN 'verified'::company_verification_status
-    ELSE 'pending'::company_verification_status
-END
-WHERE is_verified_tmp IS NULL;
-ALTER TABLE companies DROP COLUMN IF EXISTS is_verified;
-ALTER TABLE companies RENAME COLUMN is_verified_tmp TO is_verified;
+SET is_verified = 'pending'::company_verification_status
+WHERE is_verified IS NULL;
 
 ALTER TABLE companies
     ALTER COLUMN slug SET NOT NULL,

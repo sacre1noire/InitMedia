@@ -7,6 +7,13 @@ export const getVacancies = async (params?: {
   skip?: number;
   type?: string;
   specialization?: string;
+  schedule?: string;
+  city?: string;
+  is_remote?: boolean;
+  salary_from?: number;
+  salary_to?: number;
+  sort?: string;
+  order?: string;
 }) => {
   const response = await api.get<VacancyListResponse>("/api/vacancies", {
     params,
@@ -19,13 +26,24 @@ export const getVacancy = async (id: number) => {
   return response.data;
 };
 
-export const applyToVacancy = async (id: number) => {
-  const response = await api.post(`/api/vacancies/${id}/apply`);
+export const getRecommendedVacancies = async (limit?: number) => {
+  const response = await api.get<{ items: unknown[] }>(
+    "/api/vacancies/recommended",
+    { params: { limit } },
+  );
   return response.data;
 };
 
-export const applyVacancy = async (id: number) => {
-  const response = await api.post(`/api/vacancies/${id}/apply`);
+export const applyToVacancy = async (
+  id: number,
+  body?: { cover_letter?: string; resume_id?: number },
+) => {
+  const response = await api.post(`/api/vacancies/${id}/apply`, body ?? {});
   return response.data;
 };
+
+export const applyVacancy = async (
+  id: number,
+  body?: { cover_letter?: string; resume_id?: number },
+) => applyToVacancy(id, body);
 

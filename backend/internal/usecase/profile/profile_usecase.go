@@ -172,6 +172,42 @@ func (u *ProfileUseCase) UpdateMyProfile(ctx context.Context, userID int64, req 
 	return updatedProfile, nil
 }
 
+func (u *ProfileUseCase) ListCandidates(ctx context.Context, query string, limit int32, offset int32) ([]*profileDomain.CandidateSummary, error) {
+	items, err := u.profileRepo.SearchCandidates(ctx, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range items {
+		if strings.TrimSpace(item.FullName) == "" {
+			item.FullName = strings.Split(item.Email, "@")[0]
+		}
+	}
+	return items, nil
+}
+
+func (u *ProfileUseCase) GetCandidate(ctx context.Context, candidateID int64) (*profileDomain.ApplicantProfile, error) {
+	usr, err := u.userRepo.FindByID(ctx, candidateID)
+	if err != nil {
+		return nil, err
+	}
+	if usr == nil || usr.Role != user.RoleApplicant {
+		return nil, ErrProfileForbidden
+	}
+
+	profile, err := u.profileRepo.GetByUserID(ctx, candidateID)
+	if err != nil {
+		return nil, err
+	}
+	if profile == nil {
+		return &profileDomain.ApplicantProfile{
+			UserID: candidateID,
+			Email:  usr.Email,
+		}, nil
+	}
+	profile.Email = usr.Email
+	return profile, nil
+}
+
 func coalesceStringPtr(newValue *string, fallback *string) *string {
 	if newValue != nil {
 		return newValue

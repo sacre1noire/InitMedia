@@ -52,3 +52,13 @@ type ApplicantProfile struct {
 	Telegram            *string  `json:"telegram,omitempty" db:"telegram"`
 	PortfolioURL        *string  `json:"portfolio_url,omitempty" db:"portfolio_url"`
 }
+
+// CandidateSummary is a public slice of applicant profile for employer search.
+type CandidateSummary struct {
+	ID             int64   `json:"id" db:"id"`
+	FullName       string  `json:"full_name" db:"full_name"`
+	Email          string  `json:"email" db:"email"`
+	Specialization *string `json:"specialization,omitempty" db:"specialization"`
+	SkillLevel     *string `json:"skill_level,omitempty" db:"skill_level"`
+	City           *string `json:"city,omitempty" db:"city"`
+}
