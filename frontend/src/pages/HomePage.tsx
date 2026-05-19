@@ -1,109 +1,173 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
-import { Video, Clock, MapPin, Users, Target } from 'lucide-react';
-
-const mockVacancies = [
-  {
-    id: 1,
-    title: 'Junior SMM Специалист',
-    company: 'Media Pulse',
-    type: 'Вакансия',
-    salary: 'от 40 000 ₽',
-    location: 'Москва (офис)',
-    skills: ['Content Plan', 'Instagram', 'Copywriting'],
-    icon: <Users className="w-6 h-6 text-primary-600" />
-  },
-  {
-    id: 2,
-    title: 'Стажер Видеомонтажер',
-    company: 'Creative Studio',
-    type: 'Стажировка',
-    salary: 'Не оплачивается',
-    location: 'Удаленно',
-    skills: ['Premiere Pro', 'After Effects', 'Color Check'],
-    icon: <Video className="w-6 h-6 text-red-600" />
-  },
-  {
-    id: 3,
-    title: 'Ассистент Продюсера',
-    company: 'TV Channel One',
-    type: 'Вакансия',
-    salary: 'от 60 000 ₽',
-    location: 'Санкт-Петербург',
-    skills: ['Organization', 'Excel', 'Communication'],
-    icon: <Target className="w-6 h-6 text-green-600" />
-  }
-];
+import { getVacancies } from '@/services/vacancyService';
+import { Vacancy } from '@/types/vacancy';
+import { Briefcase, Clock, MapPin, Sparkles } from 'lucide-react';
 
 const HomePage: React.FC = () => {
+  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadLatest = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getVacancies({
+          limit: 3,
+          sort: 'date',
+          order: 'desc',
+        });
+        setVacancies(data.items ?? []);
+      } catch (e) {
+        console.error(e);
+        setError('Не удалось загрузить вакансии');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadLatest();
+  }, []);
+
+  const cards = useMemo(() => vacancies.slice(0, 3), [vacancies]);
+
+  const formatSalary = (item: Vacancy) => {
+    if (item.is_salary_hidden) {
+      return 'По договоренности';
+    }
+    if (item.salary_from && item.salary_to) {
+      return `${item.salary_from} - ${item.salary_to} ₽`;
+    }
+    if (item.salary_from) {
+      return `от ${item.salary_from} ₽`;
+    }
+    if (item.salary_to) {
+      return `до ${item.salary_to} ₽`;
+    }
+    return 'Зарплата не указана';
+  };
+
   return (
     <Layout>
-      <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
-        <div className="max-w-2xl">
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl text-left">
-            Найди свою карьеру в медиа
-          </h1>
-          <p className="mt-4 text-lg text-gray-600 text-left">
-            Платформа для студентов и выпускников. Вакансии, стажировки и карьерный рост в лучших медиа-компаниях.
-          </p>
-          <div className="mt-6 flex space-x-4">
-            <button className="bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 transition">
-              Найти стажировку
-            </button>
-            <button className="bg-white text-primary-600 border border-primary-200 px-6 py-3 rounded-lg font-medium hover:bg-primary-50 transition">
-              Разместить резюме
-            </button>
+      <section className="relative overflow-hidden rounded-2xl border border-primary-100 bg-gradient-to-br from-white via-primary-50 to-primary-100 p-8 shadow-sm">
+        <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-primary-200/40 blur-2xl" />
+        <div className="absolute -bottom-16 -left-10 h-48 w-48 rounded-full bg-primary-300/30 blur-3xl" />
+
+        <div className="relative grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <p className="inline-flex items-center gap-2 rounded-full bg-primary-600/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-700">
+              <Sparkles className="h-3.5 w-3.5" />
+              Карьерный старт в медиа
+            </p>
+            <h1 className="mt-4 text-4xl font-semibold leading-tight text-gray-900 sm:text-5xl">
+              Найди свою карьеру в медиа
+            </h1>
+            <p className="mt-4 text-base text-gray-600 sm:text-lg">
+              Стажировки, вакансии и карьерное сопровождение в сильных медиа-командах. Собирай опыт, резюме и знания в одном месте.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                to="/vacancies?type=internship"
+                className="rounded-xl bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
+              >
+                Найти стажировку
+              </Link>
+              <Link
+                to="/resumes"
+                className="rounded-xl border border-primary-200 bg-white px-6 py-3 text-sm font-semibold text-primary-700 transition hover:bg-primary-50"
+              >
+                Разместить резюме
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/60 bg-white/70 p-6 shadow-sm backdrop-blur">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-700">Что внутри</h3>
+            <ul className="mt-4 space-y-3 text-sm text-gray-700">
+              <li className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary-500" />
+                Реальные вакансии и стажировки
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary-500" />
+                Конструктор резюме и помощь эксперта
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary-500" />
+                Мини-курсы по PR, SMM и аналитике
+              </li>
+            </ul>
           </div>
         </div>
-      </div>
+      </section>
 
-      <h2 className="text-2xl font-bold text-gray-900 mb-6 text-left">Свежие вакансии</h2>
+      <section className="mt-10">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-gray-900">Свежие вакансии</h2>
+          <Link to="/vacancies" className="text-sm font-medium text-primary-600 hover:text-primary-700">
+            Смотреть все
+          </Link>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockVacancies.map((job) => (
-          <div key={job.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-200 p-6 border border-gray-100 flex flex-col">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-gray-50 rounded-lg">
-                {/* Render the pre-defined icon directly */}
-                {job.icon}
-              </div>
-              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${job.type === 'Стажировка' ? 'bg-green-100 text-green-800' : 'bg-primary-100 text-primary-800'
-                }`}>
-                {job.type}
-              </span>
-            </div>
-
-            <h3 className="text-xl font-bold text-gray-900 mb-1 text-left">{job.title}</h3>
-            <p className="text-sm text-gray-500 font-medium mb-4 text-left">{job.company}</p>
-
-            <div className="space-y-2 mb-6 flex-1">
-              <div className="flex items-center text-sm text-gray-600">
-                <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                {job.location}
-              </div>
-              <div className="flex items-center text-sm text-gray-600">
-                <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                Полная занятость
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mb-4">
-              {job.skills.map(skill => (
-                <span key={skill} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">
-                  {skill}
-                </span>
-              ))}
-            </div>
-
-            <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-              <span className="font-bold text-gray-900">{job.salary}</span>
-              <button className="text-sm font-medium text-primary-600 hover:text-primary-700">
-                Подробнее &rarr;
-              </button>
-            </div>
+        {loading ? (
+          <div className="mt-6 rounded-xl border border-dashed border-gray-200 bg-white p-6 text-center text-gray-500">
+            Загружаем вакансии...
           </div>
-        ))}
-      </div>
+        ) : error ? (
+          <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-700">
+            {error}
+          </div>
+        ) : cards.length === 0 ? (
+          <div className="mt-6 rounded-xl border border-dashed border-gray-200 bg-white p-6 text-center text-gray-500">
+            Пока нет опубликованных вакансий.
+          </div>
+        ) : (
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {cards.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="rounded-xl bg-primary-50 p-2 text-primary-600">
+                    <Briefcase className="h-5 w-5" />
+                  </div>
+                  <span className="rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold text-primary-800">
+                    {item.type === 'internship' ? 'Стажировка' : 'Вакансия'}
+                  </span>
+                </div>
+
+                <h3 className="mt-4 text-lg font-semibold text-gray-900">{item.title}</h3>
+                <p className="text-sm text-gray-500">{item.company?.name || 'Без названия компании'}</p>
+
+                <div className="mt-4 space-y-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-gray-400" />
+                    {item.city || (item.is_remote ? 'Удаленно' : 'Город не указан')}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    {item.schedule || 'График не указан'}
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
+                  <span className="text-sm font-semibold text-gray-900">{formatSalary(item)}</span>
+                  <Link
+                    to={`/vacancies/${item.id}`}
+                    className="text-sm font-medium text-primary-600 hover:text-primary-700"
+                  >
+                    Подробнее →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </Layout>
   );
 };

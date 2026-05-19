@@ -14,6 +14,7 @@ import (
 	"backend/internal/transport/http/middleware"
 	applicationUseCase "backend/internal/usecase/application"
 	companyUseCase "backend/internal/usecase/company"
+	courseUseCase "backend/internal/usecase/course"
 	matchingUseCase "backend/internal/usecase/matching"
 	profileUseCase "backend/internal/usecase/profile"
 	resumeusecase "backend/internal/usecase/resume"
@@ -81,6 +82,7 @@ func main() {
 	vacancyRepo := postgres.NewVacancyRepo(pool)
 	applicationRepo := postgres.NewApplicationRepo(pool)
 	resumeRepo := postgres.NewResumeRepo(pool)
+	courseRepo := postgres.NewCourseRepo(pool)
 	tokenGenerator := jwt.NewTokenGenerator(os.Getenv("JWT_SECRET"), 15*time.Minute)
 	authUseCase := usecase.NewAuthUseCase(userRepo, sessionRepo, tokenGenerator)
 	applicantProfileUseCase := profileUseCase.NewProfileUseCase(profileRepo, userRepo)
@@ -89,6 +91,7 @@ func main() {
 	applicationUC := applicationUseCase.NewApplicationUseCase(applicationRepo, vacancyRepo, userRepo)
 	matchingUC := matchingUseCase.NewUseCase(vacancyRepo, profileRepo)
 	resumeUC := resumeusecase.NewUseCase(resumeRepo)
+	courseUC := courseUseCase.NewUseCase(courseRepo, userRepo)
 	authHandler := handler.NewAuthHandler(authUseCase)
 	profileHandler := handler.NewProfileHandler(applicantProfileUseCase)
 	companyHandler := handler.NewCompanyHandler(companyUC)
@@ -97,6 +100,7 @@ func main() {
 	applicationHandler := handler.NewApplicationHandler(applicationUC)
 	matchingHandler := handler.NewMatchingHandler(matchingUC)
 	resumeHandler := handler.NewResumeHandler(resumeUC)
+	courseHandler := handler.NewCourseHandler(courseUC)
 	authMiddleware := middleware.NewAuthMiddleware(tokenGenerator)
 
 	// Setup Router
@@ -136,6 +140,12 @@ func main() {
 			profileRoutes.GET("/me", profileHandler.GetMyProfile)
 			profileRoutes.PUT("/me", profileHandler.UpdateMyProfile)
 			profileRoutes.PATCH("/me/avatar", profileHandler.UploadAvatar)
+		}
+
+		applicantRoutes := api.Group("/applicants")
+		applicantRoutes.Use(authMiddleware.RequireAuth())
+		{
+			applicantRoutes.GET("/:id", profileHandler.GetApplicantSummary)
 		}
 
 		companyRoutes := api.Group("/companies")
@@ -192,6 +202,18 @@ func main() {
 		resumeTemplateRoutes := api.Group("/resume-templates")
 		{
 			resumeTemplateRoutes.GET("", resumeHandler.ListResumeTemplates)
+		}
+
+		courseRoutes := api.Group("/courses")
+		{
+			courseRoutes.GET("/my-progress", authMiddleware.RequireAuth(), courseHandler.ListMyProgress)
+			courseRoutes.GET("/completed", authMiddleware.RequireAuth(), courseHandler.ListCompletedCourses)
+			courseRoutes.GET("", courseHandler.ListCourses)
+			courseRoutes.GET("/:id", courseHandler.GetCourse)
+			courseRoutes.GET("/:id/lessons/:lesson_id", courseHandler.GetLesson)
+			courseRoutes.POST("/:id/start", authMiddleware.RequireAuth(), courseHandler.StartCourse)
+			courseRoutes.POST("/:id/lessons/:lesson_id/complete", authMiddleware.RequireAuth(), courseHandler.CompleteLesson)
+			courseRoutes.POST("/:id/quiz/submit", authMiddleware.RequireAuth(), courseHandler.SubmitQuiz)
 		}
 
 		applicationRoutes := api.Group("/applications")

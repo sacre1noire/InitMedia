@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -184,4 +185,58 @@ func (h *ProfileHandler) UploadAvatar(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, updated)
+}
+
+// GetApplicantSummary godoc
+// @Summary      Get applicant public profile summary
+// @Description  Returns limited applicant profile for authenticated users
+// @Tags         profile
+// @Produce      json
+// @Param        id path int true "Applicant user ID"
+// @Success      200  {object}  dto.PublicApplicantProfileResponse
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /api/applicants/{id} [get]
+func (h *ProfileHandler) GetApplicantSummary(c *gin.Context) {
+	userIDVal := c.Param("id")
+	if strings.TrimSpace(userIDVal) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	userID, err := strconv.ParseInt(userIDVal, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id must be a valid integer"})
+		return
+	}
+
+	summary, portfolioURL, err := h.profileUseCase.GetPublicProfileSummary(c.Request.Context(), userID)
+	if err != nil {
+		switch err {
+		case profileUseCase.ErrProfileForbidden:
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
+		}
+	}
+	if summary == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Applicant not found"})
+		return
+	}
+
+	resp := dto.PublicApplicantProfileResponse{
+		ID:             summary.ID,
+		FullName:       summary.FullName,
+		Specialization: summary.Specialization,
+		SkillLevel:     summary.SkillLevel,
+		City:           summary.City,
+		PortfolioURL:   portfolioURL,
+	}
+
+	c.JSON(http.StatusOK, resp)
 }

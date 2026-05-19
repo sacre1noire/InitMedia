@@ -213,3 +213,34 @@ func (r *ApplicantProfileRepo) SearchCandidates(ctx context.Context, query strin
 	}
 	return items, nil
 }
+
+func (r *ApplicantProfileRepo) GetCandidateSummaryByID(ctx context.Context, userID int64) (*profileDomain.CandidateSummary, error) {
+	query := `
+		SELECT p.user_id,
+		       trim(concat_ws(' ', p.first_name, p.last_name)) AS full_name,
+		       u.email,
+		       p.specialization,
+		       p.skill_level,
+		       p.city
+		FROM applicant_profiles p
+		JOIN users u ON u.id = p.user_id
+		WHERE u.role = 'APPLICANT' AND p.user_id = $1
+	`
+
+	item := &profileDomain.CandidateSummary{}
+	if err := r.db.QueryRow(ctx, query, userID).Scan(
+		&item.ID,
+		&item.FullName,
+		&item.Email,
+		&item.Specialization,
+		&item.SkillLevel,
+		&item.City,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get candidate summary: %w", err)
+	}
+
+	return item, nil
+}

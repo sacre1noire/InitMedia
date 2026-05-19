@@ -208,6 +208,59 @@ func (u *ProfileUseCase) GetCandidate(ctx context.Context, candidateID int64) (*
 	return profile, nil
 }
 
+func (u *ProfileUseCase) GetPublicProfileSummary(ctx context.Context, candidateID int64) (*profileDomain.CandidateSummary, *string, error) {
+	usr, err := u.userRepo.FindByID(ctx, candidateID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if usr == nil || usr.Role != user.RoleApplicant {
+		return nil, nil, ErrProfileForbidden
+	}
+
+	profile, err := u.profileRepo.GetByUserID(ctx, candidateID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	fullName := buildFullName(profile)
+	if fullName == "" {
+		fullName = strings.Split(usr.Email, "@")[0]
+	}
+
+	summary := &profileDomain.CandidateSummary{
+		ID:             candidateID,
+		FullName:       fullName,
+		Email:          usr.Email,
+		Specialization: nil,
+		SkillLevel:     nil,
+		City:           nil,
+	}
+
+	var portfolioURL *string
+	if profile != nil {
+		summary.Specialization = profile.Specialization
+		summary.SkillLevel = profile.SkillLevel
+		summary.City = profile.City
+		portfolioURL = profile.PortfolioURL
+	}
+
+	return summary, portfolioURL, nil
+}
+
+func buildFullName(profile *profileDomain.ApplicantProfile) string {
+	if profile == nil {
+		return ""
+	}
+	parts := make([]string, 0, 2)
+	if profile.FirstName != nil && strings.TrimSpace(*profile.FirstName) != "" {
+		parts = append(parts, strings.TrimSpace(*profile.FirstName))
+	}
+	if profile.LastName != nil && strings.TrimSpace(*profile.LastName) != "" {
+		parts = append(parts, strings.TrimSpace(*profile.LastName))
+	}
+	return strings.TrimSpace(strings.Join(parts, " "))
+}
+
 func coalesceStringPtr(newValue *string, fallback *string) *string {
 	if newValue != nil {
 		return newValue
