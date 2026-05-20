@@ -22,3 +22,13 @@ type UpdateApplicantProfileRequest struct {
 	Telegram            *string  `json:"telegram"`
 	PortfolioURL        *string  `json:"portfolio_url"`
 }
+
+// PublicApplicantProfileResponse is a limited profile view for authenticated users.
+type PublicApplicantProfileResponse struct {
+	ID             int64   `json:"id"`
+	FullName       string  `json:"full_name"`
+	Specialization *string `json:"specialization,omitempty"`
+	SkillLevel     *string `json:"skill_level,omitempty"`
+	City           *string `json:"city,omitempty"`
+	PortfolioURL   *string `json:"portfolio_url,omitempty"`
+}

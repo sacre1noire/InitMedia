@@ -5,10 +5,8 @@ export enum VacancyType {
 }
 
 export enum VacancyStatus {
-  DRAFT = "draft",
   ACTIVE = "active",
   ARCHIVED = "archived",
-  MODERATION = "moderation",
 }
 
 export interface Company {
@@ -27,6 +25,7 @@ export interface Vacancy {
   title: string;
   description: string;
   requirements?: string;
+  duties?: string;
   type: VacancyType;
   specialization: string;
   schedule?: string;
@@ -39,6 +38,8 @@ export interface Vacancy {
   created_at: string;
   updated_at?: string;
   expires_at?: string;
+  published_at?: string;
+  applications_count?: number;
 }
 
 export interface VacancyListResponse {

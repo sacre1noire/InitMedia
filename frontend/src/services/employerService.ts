@@ -8,6 +8,11 @@ export const getMyVacancies = async () => {
   return response.data;
 };
 
+export const getEmployerVacancy = async (id: number) => {
+  const response = await api.get<Vacancy>(`/api/employer/vacancies/${id}`);
+  return response.data;
+};
+
 export const createVacancy = async (data: any) => {
   const response = await api.post<Vacancy>("/api/employer/vacancies", data);
   return response.data;

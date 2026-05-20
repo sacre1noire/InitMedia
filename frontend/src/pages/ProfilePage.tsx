@@ -14,13 +14,22 @@ import {
 } from "lucide-react";
 import { getProfile } from "@/services/profileService";
 import { getCandidate } from "@/services/employerService";
+import { getUserGamification } from "@/services/gamificationService";
+import { getCompletedCourses } from "@/services/courseService";
+import { GamificationCard } from "@/components/GamificationCard";
 import { Profile } from "@/types/profile";
+import { UserGamification } from "@/types/gamification";
+import { Course } from "@/types/course";
 import { UserRole } from "@/types/auth";
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const { id } = useParams(); // Get user ID from URL if present
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [gamification, setGamification] = useState<UserGamification | null>(
+    null,
+  );
+  const [completedCourses, setCompletedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const isOwnProfile = !id;
 
@@ -40,6 +49,22 @@ const ProfilePage: React.FC = () => {
           data = null;
         }
         setProfile(data);
+
+        const targetUserId = id
+          ? parseInt(id, 10)
+          : user?.role === UserRole.APPLICANT
+            ? user.id
+            : null;
+        if (targetUserId) {
+          const [gam, completed] = await Promise.all([
+            getUserGamification(targetUserId).catch(() => null),
+            isOwnProfile && user?.role === UserRole.APPLICANT
+              ? getCompletedCourses().catch(() => [] as Course[])
+              : Promise.resolve([] as Course[]),
+          ]);
+          setGamification(gam);
+          setCompletedCourses(completed);
+        }
       } catch (error) {
         console.error("Failed to load profile", error);
       } finally {
@@ -47,7 +72,7 @@ const ProfilePage: React.FC = () => {
       }
     };
     loadProfile();
-  }, [id, user?.role]);
+  }, [id, user?.role, user?.id, isOwnProfile]);
 
   if (!user) {
     return (
@@ -60,14 +85,14 @@ const ProfilePage: React.FC = () => {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             {isOwnProfile ? "Мой профиль" : "Профиль кандидата"}
           </h1>
           {isOwnProfile && user.role === UserRole.APPLICANT && (
             <Link
               to="/profile/edit"
-              className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition"
+              className="w-full sm:w-auto text-center bg-primary-600 text-white px-4 py-2 text-sm sm:text-base rounded-lg hover:bg-primary-700 transition"
             >
               Редактировать
             </Link>
@@ -76,7 +101,7 @@ const ProfilePage: React.FC = () => {
 
         {/* User Card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-primary-600 to-indigo-600 px-6 py-8 text-white">
+          <div className="bg-gradient-to-r from-primary-600 to-indigo-600 px-4 py-6 sm:px-6 sm:py-8 text-white">
             <div className="flex items-center space-x-4">
               <div className="w-20 h-20 rounded-full overflow-hidden bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
                 {profile?.avatar_url ? (
@@ -90,7 +115,7 @@ const ProfilePage: React.FC = () => {
                 )}
               </div>
               <div>
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-xl sm:text-2xl font-bold">
                   {profile?.first_name
                     ? `${profile.first_name} ${profile.last_name || ""}`
                     : (profile?.email || user.email).split("@")[0]}
@@ -103,7 +128,7 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-start space-x-3 text-gray-700">
                 <Mail className="w-5 h-5 text-gray-400 mt-1" />
@@ -125,6 +150,28 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {gamification && <GamificationCard stats={gamification} />}
+
+        {completedCourses.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              Завершённые курсы
+            </h3>
+            <ul className="space-y-2">
+              {completedCourses.map((c) => (
+                <li key={c.id}>
+                  <Link
+                    to={`/courses/${c.id}`}
+                    className="text-primary-600 hover:underline"
+                  >
+                    {c.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Applicant Profile Details */}
         {(user.role === UserRole.APPLICANT || !isOwnProfile) && (

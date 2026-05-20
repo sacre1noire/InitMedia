@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { getMyVacancies, deleteVacancy } from "@/services/employerService";
@@ -9,6 +9,16 @@ const EmployerVacanciesPage: React.FC = () => {
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  const statusLabel = (status: Vacancy["status"]) => {
+    switch (status) {
+      case "archived":
+        return "Архив"
+      case "active":
+      default:
+        return "Активна"
+    }
+  };
 
   useEffect(() => {
     loadVacancies();
@@ -36,6 +46,11 @@ const EmployerVacanciesPage: React.FC = () => {
     }
   };
 
+  const vacancyItems = useMemo(
+    () => vacancies.filter((v) => v.type !== "internship"),
+    [vacancies],
+  );
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -52,25 +67,32 @@ const EmployerVacanciesPage: React.FC = () => {
 
         {loading ? (
           <div className="text-center py-10">Загрузка...</div>
-        ) : vacancies.length === 0 ? (
+        ) : vacancyItems.length === 0 ? (
           <div className="text-center py-10 text-gray-500">
             У вас пока нет активных вакансий.
           </div>
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
-              {vacancies.map((vacancy) => (
+              {vacancyItems.map((vacancy) => (
                 <li key={vacancy.id}>
                   <div className="px-4 py-4 sm:px-6 flex justify-between items-center">
                     <div>
                       <h3 className="text-lg leading-6 font-medium text-primary-600 truncate">
                         {vacancy.title}
                       </h3>
-                      <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                        {vacancy.city || "Город не указан"} •{" "}
-                        {vacancy.type === "internship"
-                          ? "Стажировка"
-                          : "Вакансия"}
+                      <p className="mt-1 max-w-2xl text-sm text-gray-500 flex flex-wrap gap-2">
+                        <span>{vacancy.city || "Город не указан"}</span>
+                        <span>•</span>
+                        <span>
+                          {vacancy.type === "internship"
+                            ? "Стажировка"
+                            : "Вакансия"}
+                        </span>
+                        <span>•</span>
+                        <span>{statusLabel(vacancy.status)}</span>
+                        <span>•</span>
+                        <span>Откликов: {vacancy.applications_count ?? 0}</span>
                       </p>
                     </div>
                     <div className="flex space-x-2">

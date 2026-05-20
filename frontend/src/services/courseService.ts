@@ -1,5 +1,11 @@
 import api from "./api";
-import { Course, CourseProgress, Lesson } from "../types/course";
+import {
+  Course,
+  CourseProgress,
+  Lesson,
+  QuizQuestion,
+  SubmitQuizResult,
+} from "../types/course";
 
 export const getCourses = async () => {
   const response = await api.get<Course[]>("/api/courses");
@@ -23,14 +29,34 @@ export const getMyProgress = async () => {
   return response.data;
 };
 
+export const getCompletedCourses = async () => {
+  const response = await api.get<Course[]>("/api/courses/completed");
+  return response.data;
+};
+
+export const getCourseQuiz = async (courseId: number) => {
+  const response = await api.get<QuizQuestion[]>(
+    `/api/courses/${courseId}/quiz`,
+  );
+  return response.data;
+};
+
 export const startCourse = async (id: number) => {
   const response = await api.post<CourseProgress>(`/api/courses/${id}/start`);
   return response.data;
 };
 
 export const completeLesson = async (courseId: number, lessonId: number) => {
-  const response = await api.post(
+  const response = await api.post<CourseProgress>(
     `/api/courses/${courseId}/lessons/${lessonId}/complete`,
+  );
+  return response.data;
+};
+
+export const submitQuiz = async (courseId: number, answers: number[]) => {
+  const response = await api.post<SubmitQuizResult>(
+    `/api/courses/${courseId}/quiz/submit`,
+    { answers },
   );
   return response.data;
 };

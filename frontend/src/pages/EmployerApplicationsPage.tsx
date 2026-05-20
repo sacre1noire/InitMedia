@@ -80,6 +80,11 @@ const EmployerApplicationsPage: React.FC = () => {
                           {app.applicant?.email ||
                             `Кандидат #${app.applicant?.id ?? "unknown"}`}
                         </p>
+                        {app.resume_title && (
+                          <p className="text-xs text-gray-500 mt-1 sm:ml-6">
+                            Резюме: {app.resume_title}
+                          </p>
+                        )}
                       </div>
                       <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                         <p>

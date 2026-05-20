@@ -6,6 +6,11 @@ export const getMyApplications = async () => {
   return response.data;
 };
 
+export const getMyApplication = async (id: number) => {
+  const response = await api.get<Application>(`/api/applications/my/${id}`);
+  return response.data;
+};
+
 export const deleteApplication = async (id: number) => {
   const response = await api.delete(`/api/applications/${id}`);
   return response.data;

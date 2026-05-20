@@ -23,8 +23,7 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 # Копируем только бинарник из билдера
 COPY --from=builder /app/server /app/server
 
-# Права на запуск
-RUN chmod +x /app/server
+RUN mkdir -p /app/uploads && chmod +x /app/server
 
 # Запуск
 ENTRYPOINT ["/app/server"]

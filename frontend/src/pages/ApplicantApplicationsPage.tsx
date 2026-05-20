@@ -71,15 +71,26 @@ const ApplicantApplicationsPage: React.FC = () => {
                 className="bg-white shadow rounded-lg p-6 flex justify-between items-start"
               >
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900">
+                  <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2 flex-wrap">
                     <Link
-                      to={`/vacancies/${app.vacancy.id}`}
-                      className="hover:text-primary-600 flex items-center"
+                      to={`/applications/my/${app.id}`}
+                      className="hover:text-primary-600"
                     >
                       {app.vacancy.title}
-                      <ExternalLink className="w-4 h-4 ml-1 text-gray-400" />
+                    </Link>
+                    <Link
+                      to={`/vacancies/${app.vacancy.id}`}
+                      className="text-gray-400 hover:text-primary-600"
+                      title="Вакансия"
+                    >
+                      <ExternalLink className="w-4 h-4" />
                     </Link>
                   </h3>
+                  {app.resume_title && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Резюме: {app.resume_title}
+                    </p>
+                  )}
                   <p className="text-sm text-gray-500 mt-1">
                     {app.vacancy.company?.name || "Компания"}
                   </p>

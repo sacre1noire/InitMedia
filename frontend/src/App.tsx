@@ -1,24 +1,33 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthGuard } from "@/components/AuthGuard";
+import { ApplicantRoute } from "@/components/ApplicantRoute";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import HomePage from "@/pages/HomePage";
 import ProfilePage from "@/pages/ProfilePage";
 import ProfileEditPage from "@/pages/ProfileEditPage";
 import VacanciesPage from "@/pages/VacanciesPage";
+import RecommendedVacanciesPage from "@/pages/RecommendedVacanciesPage";
 import VacancyDetailsPage from "@/pages/VacancyDetailsPage";
 import EmployerVacanciesPage from "@/pages/EmployerVacanciesPage";
+import EmployerInternshipsPage from "@/pages/EmployerInternshipsPage";
 import VacancyEditPage from "@/pages/VacancyEditPage";
 import EmployerApplicationsPage from "@/pages/EmployerApplicationsPage";
 import ApplicantApplicationsPage from "@/pages/ApplicantApplicationsPage";
+import ApplicationDetailPage from "@/pages/ApplicationDetailPage";
 import CandidateSearchPage from "@/pages/CandidateSearchPage";
 import CoursesPage from "@/pages/CoursesPage";
 import CourseDetailsPage from "@/pages/CourseDetailsPage";
 import LessonPage from "@/pages/LessonPage";
+import CourseQuizPage from "@/pages/CourseQuizPage";
 import CompaniesPage from "@/pages/CompaniesPage";
 import CompanyProfilePage from "@/pages/CompanyProfilePage";
 import CompanyEditPage from "@/pages/CompanyEditPage";
+import MyCompanyPage from "@/pages/MyCompanyPage";
+import ResumeListPage from "@/pages/ResumeListPage";
+import ResumeEditPage from "@/pages/ResumeEditPage";
+import ResumePreviewPage from "@/pages/ResumePreviewPage";
 
 function App() {
   return (
@@ -55,6 +64,14 @@ function App() {
           />
 
           {/* Public/Applicant Routes */}
+          <Route
+            path="/vacancies/recommended"
+            element={
+              <AuthGuard>
+                <RecommendedVacanciesPage />
+              </AuthGuard>
+            }
+          />
           <Route
             path="/vacancies"
             element={
@@ -103,6 +120,23 @@ function App() {
               </AuthGuard>
             }
           />
+
+          <Route
+            path="/employer/company"
+            element={
+              <AuthGuard>
+                <MyCompanyPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/applications/my/:id"
+            element={
+              <AuthGuard>
+                <ApplicationDetailPage />
+              </AuthGuard>
+            }
+          />
           <Route
             path="/applications/my"
             element={
@@ -112,12 +146,55 @@ function App() {
             }
           />
 
+          <Route
+            path="/resumes"
+            element={
+              <AuthGuard>
+                <ApplicantRoute>
+                  <ResumeListPage />
+                </ApplicantRoute>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/resumes/new"
+            element={
+              <AuthGuard>
+                <ApplicantRoute>
+                  <ResumeEditPage />
+                </ApplicantRoute>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/resumes/:id/edit"
+            element={
+              <AuthGuard>
+                <ApplicantRoute>
+                  <ResumeEditPage />
+                </ApplicantRoute>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/resumes/:id/preview"
+            element={
+              <AuthGuard>
+                <ApplicantRoute>
+                  <ResumePreviewPage />
+                </ApplicantRoute>
+              </AuthGuard>
+            }
+          />
+
           {/* Course Routes */}
           <Route
             path="/courses"
             element={
               <AuthGuard>
-                <CoursesPage />
+                <ApplicantRoute>
+                  <CoursesPage />
+                </ApplicantRoute>
               </AuthGuard>
             }
           />
@@ -125,7 +202,9 @@ function App() {
             path="/courses/:id"
             element={
               <AuthGuard>
-                <CourseDetailsPage />
+                <ApplicantRoute>
+                  <CourseDetailsPage />
+                </ApplicantRoute>
               </AuthGuard>
             }
           />
@@ -133,7 +212,19 @@ function App() {
             path="/courses/:id/lessons/:lessonId"
             element={
               <AuthGuard>
-                <LessonPage />
+                <ApplicantRoute>
+                  <LessonPage />
+                </ApplicantRoute>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/courses/:id/quiz"
+            element={
+              <AuthGuard>
+                <ApplicantRoute>
+                  <CourseQuizPage />
+                </ApplicantRoute>
               </AuthGuard>
             }
           />
@@ -148,6 +239,14 @@ function App() {
             }
           />
           <Route
+            path="/employer/internships"
+            element={
+              <AuthGuard>
+                <EmployerInternshipsPage />
+              </AuthGuard>
+            }
+          />
+          <Route
             path="/employer/vacancies/new"
             element={
               <AuthGuard>
@@ -156,7 +255,23 @@ function App() {
             }
           />
           <Route
+            path="/employer/internships/new"
+            element={
+              <AuthGuard>
+                <VacancyEditPage />
+              </AuthGuard>
+            }
+          />
+          <Route
             path="/employer/vacancies/:id/edit"
+            element={
+              <AuthGuard>
+                <VacancyEditPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/employer/internships/:id/edit"
             element={
               <AuthGuard>
                 <VacancyEditPage />

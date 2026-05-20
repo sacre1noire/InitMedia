@@ -58,7 +58,7 @@ func (u *CompanyUseCase) Create(ctx context.Context, ownerID int64, actorRole st
 		WebsiteURL:  input.WebsiteURL,
 		LogoURL:     input.LogoURL,
 		Size:        input.Size,
-		IsVerified:  company.VerificationPending,
+		IsVerified:  company.VerificationVerified,
 	}
 
 	if err := u.repo.Create(ctx, companyModel); err != nil {
@@ -147,13 +147,10 @@ func (u *CompanyUseCase) Update(ctx context.Context, id int64, actorID int64, ac
 		return nil, ErrForbiddenCompanyUpdate
 	}
 
-	criticalChanged := false
-
 	if input.Name != nil {
 		newName := strings.TrimSpace(*input.Name)
 		if newName != "" && newName != existing.Name {
 			existing.Name = newName
-			criticalChanged = true
 
 			slug, err := u.generateUniqueSlug(ctx, newName, existing.ID)
 			if err != nil {
@@ -164,10 +161,7 @@ func (u *CompanyUseCase) Update(ctx context.Context, id int64, actorID int64, ac
 	}
 
 	if input.Description != nil {
-		if existing.Description == nil || *existing.Description != *input.Description {
-			existing.Description = input.Description
-			criticalChanged = true
-		}
+		existing.Description = input.Description
 	}
 
 	if input.IndustryID != nil {
@@ -183,9 +177,7 @@ func (u *CompanyUseCase) Update(ctx context.Context, id int64, actorID int64, ac
 		existing.Size = input.Size
 	}
 
-	if criticalChanged {
-		existing.IsVerified = company.VerificationPending
-	}
+	existing.IsVerified = company.VerificationVerified
 
 	if err := u.repo.Update(ctx, existing); err != nil {
 		return nil, fmt.Errorf("update company usecase: %w", err)
@@ -226,7 +218,7 @@ func (u *CompanyUseCase) Replace(ctx context.Context, id int64, actorID int64, a
 	existing.WebsiteURL = input.WebsiteURL
 	existing.LogoURL = input.LogoURL
 	existing.Size = input.Size
-	existing.IsVerified = company.VerificationPending
+	existing.IsVerified = company.VerificationVerified
 
 	if err := u.repo.Update(ctx, existing); err != nil {
 		return nil, fmt.Errorf("replace company usecase: %w", err)

@@ -38,6 +38,7 @@ type Company struct {
 	IndustryID   *int32             `json:"industry_id,omitempty" db:"industry_id"`
 	WebsiteURL   *string            `json:"website_url,omitempty" db:"website_url"`
 	LogoURL      *string            `json:"logo_url,omitempty" db:"logo_url"`
+	City         *string            `json:"city,omitempty" db:"city"`
 	Size         *SizeRange         `json:"size,omitempty" db:"size"`
 	IsVerified   VerificationStatus `json:"is_verified" db:"is_verified"`
 	SearchVector *string            `json:"-" db:"search_vector"`
