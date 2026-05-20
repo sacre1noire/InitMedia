@@ -1,5 +1,5 @@
 import React from "react";
-import { BadgeCheck, Clock3, XCircle } from "lucide-react";
+import { BadgeCheck, XCircle } from "lucide-react";
 import { CompanyVerificationStatus } from "@/types/company";
 
 interface Props {

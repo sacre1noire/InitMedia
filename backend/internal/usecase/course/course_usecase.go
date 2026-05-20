@@ -7,6 +7,7 @@ import (
 
 	"backend/internal/domain/course"
 	"backend/internal/domain/user"
+	"backend/internal/pkg/gamification"
 )
 
 var (
@@ -259,6 +260,33 @@ func (u *UseCase) ListMyProgress(ctx context.Context, userID int64) ([]*course.C
 		return nil, ErrUserForbidden
 	}
 	return u.repo.ListProgress(ctx, userID)
+}
+
+func (u *UseCase) ListQuizQuestions(ctx context.Context, courseID int64) ([]*course.QuizQuestion, error) {
+	item, err := u.repo.GetCourseByID(ctx, courseID)
+	if err != nil {
+		return nil, err
+	}
+	if item == nil {
+		return nil, ErrCourseNotFound
+	}
+	return u.repo.ListQuizQuestions(ctx, courseID)
+}
+
+func (u *UseCase) GetUserGamification(ctx context.Context, userID int64) (gamification.Stats, error) {
+	usr, err := u.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return gamification.Stats{}, err
+	}
+	if usr == nil {
+		return gamification.Stats{}, ErrUserForbidden
+	}
+
+	totalXP, err := u.repo.SumUserXP(ctx, userID)
+	if err != nil {
+		return gamification.Stats{}, err
+	}
+	return gamification.FromTotalXP(totalXP), nil
 }
 
 func (u *UseCase) ListCompletedCourses(ctx context.Context, userID int64) ([]*course.Course, error) {

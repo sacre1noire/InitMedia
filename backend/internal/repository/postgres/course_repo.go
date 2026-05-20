@@ -382,6 +382,15 @@ func (r *CourseRepo) ListQuizQuestions(ctx context.Context, courseID int64) ([]*
 	return items, nil
 }
 
+func (r *CourseRepo) SumUserXP(ctx context.Context, userID int64) (int32, error) {
+	query := `SELECT COALESCE(SUM(xp_earned), 0)::int FROM course_progress WHERE user_id = $1`
+	var total int32
+	if err := r.db.QueryRow(ctx, query, userID).Scan(&total); err != nil {
+		return 0, fmt.Errorf("sum user xp: %w", err)
+	}
+	return total, nil
+}
+
 func (r *CourseRepo) CreateQuizAttempt(ctx context.Context, attempt *course.QuizAttempt) error {
 	answersBytes, err := json.Marshal(attempt.Answers)
 	if err != nil {

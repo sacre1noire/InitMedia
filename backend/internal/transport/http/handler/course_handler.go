@@ -219,6 +219,89 @@ func (h *CourseHandler) CompleteLesson(c *gin.Context) {
 	c.JSON(http.StatusOK, toProgressResponse(progress))
 }
 
+// GetQuiz godoc
+// @Summary      Get course quiz questions
+// @Tags         courses
+// @Produce      json
+// @Param        id path int true "Course ID"
+// @Success      200  {array}  dto.QuizQuestionResponse
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /api/courses/{id}/quiz [get]
+func (h *CourseHandler) GetQuiz(c *gin.Context) {
+	courseID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id must be a valid integer"})
+		return
+	}
+
+	questions, err := h.uc.ListQuizQuestions(c.Request.Context(), courseID)
+	if err != nil {
+		switch err {
+		case courseusecase.ErrCourseNotFound:
+			c.JSON(http.StatusNotFound, gin.H{"error": "Course not found"})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
+		}
+	}
+
+	resp := make([]dto.QuizQuestionResponse, 0, len(questions))
+	for _, q := range questions {
+		resp = append(resp, dto.QuizQuestionResponse{
+			ID:       q.ID,
+			Question: q.Question,
+			Options:  q.Options,
+			Order:    q.Order,
+		})
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// GetUserGamification godoc
+// @Summary      Get user XP and level
+// @Tags         courses
+// @Produce      json
+// @Param        user_id path int true "User ID"
+// @Success      200  {object}  dto.UserGamificationResponse
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /api/gamification/users/{user_id} [get]
+func (h *CourseHandler) GetUserGamification(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("user_id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id must be a valid integer"})
+		return
+	}
+
+	stats, err := h.uc.GetUserGamification(c.Request.Context(), userID)
+	if err != nil {
+		switch err {
+		case courseusecase.ErrUserForbidden:
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
+		}
+	}
+
+	completed, err := h.uc.ListCompletedCourses(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.UserGamificationResponse{
+		Stats:                 stats,
+		CompletedCoursesCount: int32(len(completed)),
+	})
+}
+
 // SubmitQuiz godoc
 // @Summary      Submit quiz answers
 // @Tags         courses

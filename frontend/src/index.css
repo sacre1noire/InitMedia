@@ -3,13 +3,40 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   :root {
-    font-size: 115%;
+    font-size: 100%;
+  }
+
+  @media (min-width: 640px) {
+    :root {
+      font-size: 105%;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    :root {
+      font-size: 115%;
+    }
   }
 
   body {
     @apply antialiased bg-primary-50 text-primary-900;
     font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  }
+}
+
+@layer components {
+  .course-prose {
+    @apply text-[0.9375rem] sm:text-base md:text-[1.05rem] leading-relaxed text-gray-800 whitespace-pre-wrap break-words;
+  }
+
+  .course-content-card {
+    @apply rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden;
   }
 }
 

@@ -16,9 +16,11 @@ import {
   Building2,
 } from "lucide-react";
 
-export const Layout: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const Layout: React.FC<{
+  children: React.ReactNode;
+  /** Убирает отступы main — для полноэкранных страниц урока */
+  fullBleed?: boolean;
+}> = ({ children, fullBleed = false }) => {
   const { logout, user } = useAuth();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -307,7 +309,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
         )}
       </nav>
 
-      <main className="flex-1 max-w-[96rem] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main
+        className={
+          fullBleed
+            ? "flex-1 w-full"
+            : "flex-1 max-w-[96rem] w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8"
+        }
+      >
         {children}
       </main>
 

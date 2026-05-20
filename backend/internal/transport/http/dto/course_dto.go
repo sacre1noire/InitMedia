@@ -1,6 +1,10 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"backend/internal/pkg/gamification"
+)
 
 // SubmitQuizRequest is payload for quiz submission.
 type SubmitQuizRequest struct {
@@ -27,4 +31,18 @@ type CourseProgressResponse struct {
 	XPEarned         int32      `json:"xp_earned"`
 	StartedAt        time.Time  `json:"started_at"`
 	CompletedAt      *time.Time `json:"completed_at,omitempty"`
+}
+
+// QuizQuestionResponse is a quiz question without the correct answer.
+type QuizQuestionResponse struct {
+	ID       int64    `json:"id"`
+	Question string   `json:"question"`
+	Options  []string `json:"options"`
+	Order    int32    `json:"order"`
+}
+
+// UserGamificationResponse describes XP and level for a user profile.
+type UserGamificationResponse struct {
+	gamification.Stats
+	CompletedCoursesCount int32 `json:"completed_courses_count"`
 }

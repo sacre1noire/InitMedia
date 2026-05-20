@@ -91,4 +91,5 @@ type Repository interface {
 	ListCompletedCourses(ctx context.Context, userID int64) ([]*Course, error)
 	ListQuizQuestions(ctx context.Context, courseID int64) ([]*QuizQuestion, error)
 	CreateQuizAttempt(ctx context.Context, attempt *QuizAttempt) error
+	SumUserXP(ctx context.Context, userID int64) (int32, error)
 }

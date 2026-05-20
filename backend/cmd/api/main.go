@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"backend/internal/domain/user"
@@ -106,7 +107,7 @@ func main() {
 	// Setup Router
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://127.0.0.1:5173"},
+		AllowOrigins:     corsAllowedOrigins(),
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -204,12 +205,15 @@ func main() {
 			resumeTemplateRoutes.GET("", resumeHandler.ListResumeTemplates)
 		}
 
+		api.GET("/gamification/users/:user_id", authMiddleware.RequireAuth(), courseHandler.GetUserGamification)
+
 		courseRoutes := api.Group("/courses")
 		{
 			courseRoutes.GET("/my-progress", authMiddleware.RequireAuth(), courseHandler.ListMyProgress)
 			courseRoutes.GET("/completed", authMiddleware.RequireAuth(), courseHandler.ListCompletedCourses)
 			courseRoutes.GET("", courseHandler.ListCourses)
 			courseRoutes.GET("/:id", courseHandler.GetCourse)
+			courseRoutes.GET("/:id/quiz", courseHandler.GetQuiz)
 			courseRoutes.GET("/:id/lessons/:lesson_id", courseHandler.GetLesson)
 			courseRoutes.POST("/:id/start", authMiddleware.RequireAuth(), courseHandler.StartCourse)
 			courseRoutes.POST("/:id/lessons/:lesson_id/complete", authMiddleware.RequireAuth(), courseHandler.CompleteLesson)
@@ -271,6 +275,27 @@ func main() {
 	log.Printf("Server starting on port %s", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
+	}
+}
+
+func corsAllowedOrigins() []string {
+	if raw := os.Getenv("CORS_ORIGINS"); raw != "" {
+		parts := strings.Split(raw, ",")
+		origins := make([]string, 0, len(parts))
+		for _, part := range parts {
+			origin := strings.TrimSpace(part)
+			if origin != "" {
+				origins = append(origins, origin)
+			}
+		}
+		if len(origins) > 0 {
+			return origins
+		}
+	}
+	return []string{
+		"http://localhost:5173",
+		"http://127.0.0.1:5173",
+		"http://5.35.99.120:5173",
 	}
 }
 

@@ -20,6 +20,7 @@ import CandidateSearchPage from "@/pages/CandidateSearchPage";
 import CoursesPage from "@/pages/CoursesPage";
 import CourseDetailsPage from "@/pages/CourseDetailsPage";
 import LessonPage from "@/pages/LessonPage";
+import CourseQuizPage from "@/pages/CourseQuizPage";
 import CompaniesPage from "@/pages/CompaniesPage";
 import CompanyProfilePage from "@/pages/CompanyProfilePage";
 import CompanyEditPage from "@/pages/CompanyEditPage";
@@ -213,6 +214,16 @@ function App() {
               <AuthGuard>
                 <ApplicantRoute>
                   <LessonPage />
+                </ApplicantRoute>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/courses/:id/quiz"
+            element={
+              <AuthGuard>
+                <ApplicantRoute>
+                  <CourseQuizPage />
                 </ApplicantRoute>
               </AuthGuard>
             }
