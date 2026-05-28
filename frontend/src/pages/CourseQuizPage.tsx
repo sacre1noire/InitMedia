@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Layout } from "@/components/Layout";
+import { useConfirm, useToast } from "@/components/animations";
 import {
   getCourse,
   getCourseQuiz,
@@ -12,6 +14,8 @@ import { ArrowLeft, CheckCircle, Loader2, XCircle } from "lucide-react";
 const CourseQuizPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [course, setCourse] = useState<Course | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -48,9 +52,17 @@ const CourseQuizPage: React.FC = () => {
     if (!id || questions.length === 0) return;
     const orderedAnswers = questions.map((q) => answers[q.id] ?? -1);
     if (orderedAnswers.some((a) => a < 0)) {
-      alert("Ответьте на все вопросы");
+      toast("Ответьте на все вопросы перед отправкой", "error");
       return;
     }
+
+    const ok = await confirm({
+      title: "Отправить ответы?",
+      description: "После отправки результат будет зафиксирован.",
+      confirmLabel: "Отправить",
+      variant: "default",
+    });
+    if (!ok) return;
 
     setSubmitting(true);
     try {
@@ -61,9 +73,14 @@ const CourseQuizPage: React.FC = () => {
         passed: res.passed,
         xpEarned: res.progress?.xp_earned,
       });
+      if (res.passed) {
+        toast(`Тест пройден! +${res.progress?.xp_earned ?? 0} XP`, "success");
+      } else {
+        toast("Попробуйте ещё раз", "info");
+      }
     } catch (error) {
       console.error(error);
-      alert("Не удалось отправить ответы");
+      toast("Не удалось отправить ответы", "error");
     } finally {
       setSubmitting(false);
     }
@@ -120,7 +137,10 @@ const CourseQuizPage: React.FC = () => {
         </p>
 
         {result ? (
-          <div
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 22 }}
             className={`rounded-2xl border p-5 sm:p-8 text-center ${
               result.passed
                 ? "border-green-200 bg-green-50"
@@ -128,9 +148,21 @@ const CourseQuizPage: React.FC = () => {
             }`}
           >
             {result.passed ? (
-              <CheckCircle className="h-14 w-14 text-green-600 mx-auto mb-4" />
+              <motion.div
+                initial={{ scale: 0, rotate: -45 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.15 }}
+              >
+                <CheckCircle className="h-14 w-14 text-green-600 mx-auto mb-4" />
+              </motion.div>
             ) : (
-              <XCircle className="h-14 w-14 text-rose-600 mx-auto mb-4" />
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.15 }}
+              >
+                <XCircle className="h-14 w-14 text-rose-600 mx-auto mb-4" />
+              </motion.div>
             )}
             <h2 className="text-xl sm:text-2xl font-bold mb-2">
               {result.passed ? "Тест пройден!" : "Попробуйте ещё раз"}
@@ -170,7 +202,7 @@ const CourseQuizPage: React.FC = () => {
                 </button>
               )}
             </div>
-          </div>
+          </motion.div>
         ) : (
           <div className="space-y-6">
             {questions.map((q, idx) => (

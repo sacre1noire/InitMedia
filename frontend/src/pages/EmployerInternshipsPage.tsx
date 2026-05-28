@@ -4,11 +4,14 @@ import { Layout } from "@/components/Layout";
 import { getMyVacancies, deleteVacancy } from "@/services/employerService";
 import { Vacancy } from "@/types/vacancy";
 import { Edit, Eye, Plus, Trash2 } from "lucide-react";
+import { useConfirm, useToast } from "@/components/animations";
 
 const EmployerInternshipsPage: React.FC = () => {
     const [vacancies, setVacancies] = useState<Vacancy[]>([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+    const confirm = useConfirm();
+    const toast = useToast();
 
     const statusLabel = (status: Vacancy["status"]) => {
         switch (status) {
@@ -41,13 +44,20 @@ const EmployerInternshipsPage: React.FC = () => {
     );
 
     const handleDelete = async (id: number) => {
-        if (window.confirm("Вы уверены, что хотите удалить стажировку?")) {
-            try {
-                await deleteVacancy(id);
-                setVacancies((prev) => prev.filter((v) => v.id !== id));
-            } catch (error) {
-                console.error("Failed to delete internship", error);
-            }
+        const ok = await confirm({
+            title: "Удалить стажировку?",
+            description: "Связанные отклики также будут скрыты.",
+            confirmLabel: "Удалить",
+            variant: "danger",
+        });
+        if (!ok) return;
+        try {
+            await deleteVacancy(id);
+            setVacancies((prev) => prev.filter((v) => v.id !== id));
+            toast("Стажировка удалена", "success");
+        } catch (error) {
+            console.error("Failed to delete internship", error);
+            toast("Не удалось удалить стажировку", "error");
         }
     };
 

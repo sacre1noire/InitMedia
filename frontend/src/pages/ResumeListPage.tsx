@@ -9,12 +9,16 @@ import {
 } from "@/services/resumeService";
 import { Resume } from "@/types/resume";
 import { Loader2, Plus, Star } from "lucide-react";
+import { motion } from "framer-motion";
+import { useConfirm, useToast, StaggerList, StaggerItem } from "@/components/animations";
 
 const ResumeListPage: React.FC = () => {
     const [items, setItems] = useState<Resume[]>([]);
     const [loading, setLoading] = useState(true);
     const [savingPrimary, setSavingPrimary] = useState<number | null>(null);
     const navigate = useNavigate();
+    const confirm = useConfirm();
+    const toast = useToast();
 
     const load = async () => {
         setLoading(true);
@@ -33,12 +37,20 @@ const ResumeListPage: React.FC = () => {
     }, []);
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm("Удалить резюме?")) return;
+        const ok = await confirm({
+            title: "Удалить резюме?",
+            description: "Это действие нельзя отменить.",
+            confirmLabel: "Удалить",
+            variant: "danger",
+        });
+        if (!ok) return;
         try {
             await deleteResume(id);
             setItems((prev) => prev.filter((item) => item.id !== id));
+            toast("Резюме удалено", "success");
         } catch (error) {
             console.error("Failed to delete resume", error);
+            toast("Не удалось удалить резюме", "error");
         }
     };
 
@@ -79,13 +91,15 @@ const ResumeListPage: React.FC = () => {
                             Создавайте несколько версий и выбирайте основное резюме.
                         </p>
                     </div>
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
                         onClick={() => navigate("/resumes/new")}
-                        className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                        className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 shadow-sm"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Новое резюме
-                    </button>
+                    </motion.button>
                 </div>
 
                 {loading ? (
@@ -97,11 +111,11 @@ const ResumeListPage: React.FC = () => {
                         Резюме еще не созданы.
                     </div>
                 ) : (
-                    <div className="space-y-3">
+                    <StaggerList className="space-y-3">
                         {items.map((item) => (
-                            <div
+                            <StaggerItem
                                 key={item.id}
-                                className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm"
+                                className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
                             >
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
@@ -151,9 +165,9 @@ const ResumeListPage: React.FC = () => {
                                         </button>
                                     </div>
                                 </div>
-                            </div>
+                            </StaggerItem>
                         ))}
-                    </div>
+                    </StaggerList>
                 )}
             </div>
         </Layout>

@@ -5,6 +5,7 @@ import { Layout } from "@/components/Layout";
 import { createVacancy, updateVacancy } from "@/services/employerService";
 import { getVacancy } from "@/services/vacancyService";
 import { VacancyType } from "@/types/vacancy";
+import { useToast } from "@/components/animations";
 
 interface VacancyForm {
   title: string;
@@ -28,6 +29,7 @@ const VacancyEditPage: React.FC = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const { register, handleSubmit, setValue } = useForm<VacancyForm>({
     defaultValues: {
       duties: "",
@@ -125,10 +127,11 @@ const VacancyEditPage: React.FC = () => {
         data.type === VacancyType.INTERNSHIP || isInternshipRoute
           ? "/employer/internships"
           : "/employer/vacancies";
+      toast(isEditMode ? "Изменения сохранены" : "Вакансия опубликована", "success");
       navigate(targetList);
     } catch (error) {
       console.error("Failed to save vacancy", error);
-      alert("Ошибка при сохранении вакансии");
+      toast("Не удалось сохранить вакансию", "error");
     } finally {
       setLoading(false);
     }

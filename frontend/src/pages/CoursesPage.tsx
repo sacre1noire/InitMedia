@@ -15,6 +15,8 @@ import {
   PlayCircle,
   Loader2,
 } from "lucide-react";
+import { motion } from "framer-motion";
+import { StaggerList, StaggerItem } from "@/components/animations";
 
 const studyTracks = [
   { title: "Маркетинг и SMM", lessons: "12 мини-уроков", keyword: "smm" },
@@ -212,14 +214,15 @@ const CoursesPage: React.FC = () => {
                 : "Пока нет опубликованных курсов."}
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <StaggerList className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filteredCourses.map((course) => {
                 const cp = getProgressForCourse(course.id);
                 return (
-                  <article
+                  <StaggerItem
                     key={course.id}
-                    className="group rounded-2xl border border-primary-200 bg-white p-4 sm:p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                    className="group rounded-2xl border border-primary-200 bg-white p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow"
                   >
+                  <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <span className="rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold text-primary-800">
                         {course.specializations?.[0] || "Media"}
@@ -273,10 +276,11 @@ const CoursesPage: React.FC = () => {
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
                     </div>
-                  </article>
+                  </motion.div>
+                  </StaggerItem>
                 );
               })}
-            </div>
+            </StaggerList>
           )}
         </section>
 

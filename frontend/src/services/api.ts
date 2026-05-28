@@ -1,14 +1,20 @@
-import axios from 'axios';
+import axios, {
+  AxiosError,
+  AxiosHeaders,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-type RetriableRequest = {
-  _retry?: boolean;
-  url?: string;
-  headers?: Record<string, string>;
-};
-
 const AUTH_ENDPOINTS = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh'];
+
+type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+interface RefreshTokenResponse {
+  access_token: string;
+  refresh_token: string;
+}
 
 const clearAuthStorage = () => {
   localStorage.removeItem('access_token');
@@ -23,30 +29,32 @@ const api = axios.create({
   },
 });
 
-// Interceptor для добавления токена к запросам
 api.interceptors.request.use(
-  (config: any) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('access_token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      const headers =
+        config.headers instanceof AxiosHeaders
+          ? config.headers
+          : new AxiosHeaders(config.headers);
+      headers.set('Authorization', `Bearer ${token}`);
+      config.headers = headers;
     }
     return config;
   },
-  (error: any) => {
-    return Promise.reject(error);
-  }
+  (error: AxiosError) => Promise.reject(error),
 );
 
-// Interceptor для обработки ошибок и обновления токена
 api.interceptors.response.use(
-  (response: any) => response,
-  async (error: any) => {
-    const originalRequest = (error.config || {}) as RetriableRequest;
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest = (error.config ?? {}) as RetriableConfig;
     const status = error.response?.status;
-    const requestUrl = originalRequest.url || '';
-    const isAuthEndpoint = AUTH_ENDPOINTS.some((endpoint) => requestUrl.includes(endpoint));
+    const requestUrl = originalRequest.url ?? '';
+    const isAuthEndpoint = AUTH_ENDPOINTS.some((endpoint) =>
+      requestUrl.includes(endpoint),
+    );
 
-    // Если получили 401 и это не повторный запрос
     if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
@@ -56,22 +64,24 @@ api.interceptors.response.use(
           throw new Error('No refresh token');
         }
 
-        const response = await axios.post(`${API_URL}/api/auth/refresh`, {
-          refresh_token: refreshToken,
-        });
+        const response = await axios.post<RefreshTokenResponse>(
+          `${API_URL}/api/auth/refresh`,
+          { refresh_token: refreshToken },
+        );
 
         const { access_token, refresh_token } = response.data;
-
         localStorage.setItem('access_token', access_token);
         localStorage.setItem('refresh_token', refresh_token);
 
-        originalRequest.headers = {
-          ...(originalRequest.headers || {}),
-          Authorization: `Bearer ${access_token}`,
-        };
+        const headers =
+          originalRequest.headers instanceof AxiosHeaders
+            ? originalRequest.headers
+            : new AxiosHeaders(originalRequest.headers);
+        headers.set('Authorization', `Bearer ${access_token}`);
+        originalRequest.headers = headers;
+
         return api(originalRequest);
       } catch (refreshError) {
-        // Если обновление токена не удалось, очищаем storage
         clearAuthStorage();
         window.location.href = '/login';
         return Promise.reject(refreshError);
@@ -83,7 +93,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

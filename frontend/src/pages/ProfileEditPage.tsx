@@ -12,6 +12,7 @@ import {
   SchedulePreference,
 } from "@/types/profile";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/animations";
 
 const specializationLabels: Record<Specialization, string> = {
   [Specialization.WEB_ANALYST]: "Веб-аналитик",
@@ -69,6 +70,7 @@ const scheduleLabels: Record<SchedulePreference, string> = {
 
 const ProfileEditPage: React.FC = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -120,10 +122,11 @@ const ProfileEditPage: React.FC = () => {
     setSaving(true);
     try {
       await updateProfile(data);
+      toast("Профиль сохранён", "success");
       navigate("/profile");
     } catch (error) {
       console.error("Failed to update profile", error);
-      alert("Ошибка при сохранении профиля");
+      toast("Не удалось сохранить профиль", "error");
     } finally {
       setSaving(false);
     }
@@ -140,9 +143,10 @@ const ProfileEditPage: React.FC = () => {
       const profile = await uploadAvatar(file);
       setAvatarPreview(profile.avatar_url);
       setValue("avatar_url", profile.avatar_url || "");
+      toast("Аватар обновлён", "success");
     } catch (error) {
       console.error("Failed to upload avatar", error);
-      alert("Ошибка при загрузке аватара");
+      toast("Не удалось загрузить аватар", "error");
     } finally {
       setAvatarUploading(false);
       event.target.value = "";
