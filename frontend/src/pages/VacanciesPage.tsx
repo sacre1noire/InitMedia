@@ -4,6 +4,8 @@ import { Layout } from "@/components/Layout";
 import { getVacancies } from "@/services/vacancyService";
 import { Vacancy } from "@/types/vacancy";
 import { Loader2, Search, MapPin, SlidersHorizontal, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { StaggerList, StaggerItem } from "@/components/animations";
 
 const PAGE_SIZE = 20;
 
@@ -332,47 +334,50 @@ const VacanciesPage: React.FC = () => {
             {type === "internship" ? "Стажировок" : "Вакансий"} не найдено
           </p>
         ) : (
-          <div className="space-y-4">
+          <StaggerList className="space-y-4">
             {vacancies.map((v) => (
-              <Link
-                to={`/vacancies/${v.id}`}
-                key={v.id}
-                className="block bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                      {v.title}
-                    </h3>
-                    <p className="text-gray-600 mb-2">
-                      {v.company?.name || "Компания"}
-                    </p>
-                    <div className="flex items-center text-sm text-gray-500 gap-4 flex-wrap">
-                      <span className="flex items-center">
-                        <MapPin size={14} className="mr-1" />{" "}
-                        {v.city || (v.is_remote ? "Удалённо" : "Город не указан")}
-                      </span>
-                      <span className="bg-gray-100 px-2 py-0.5 rounded text-xs uppercase">
-                        {v.type === "internship" ? "Стажировка" : v.type}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {v.published_at
-                          ? new Date(v.published_at).toLocaleDateString()
-                          : new Date(v.created_at).toLocaleDateString()}
-                      </span>
+              <StaggerItem key={v.id}>
+                <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
+                  <Link
+                    to={`/vacancies/${v.id}`}
+                    className="block bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                          {v.title}
+                        </h3>
+                        <p className="text-gray-600 mb-2">
+                          {v.company?.name || "Компания"}
+                        </p>
+                        <div className="flex items-center text-sm text-gray-500 gap-4 flex-wrap">
+                          <span className="flex items-center">
+                            <MapPin size={14} className="mr-1" />{" "}
+                            {v.city || (v.is_remote ? "Удалённо" : "Город не указан")}
+                          </span>
+                          <span className="bg-gray-100 px-2 py-0.5 rounded text-xs uppercase">
+                            {v.type === "internship" ? "Стажировка" : v.type}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {v.published_at
+                              ? new Date(v.published_at).toLocaleDateString()
+                              : new Date(v.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-green-600">
+                          {v.is_salary_hidden
+                            ? "По договоренности"
+                            : `от ${v.salary_from ?? 0} ₽`}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-green-600">
-                      {v.is_salary_hidden
-                        ? "По договоренности"
-                        : `от ${v.salary_from ?? 0} ₽`}
-                    </p>
-                  </div>
-                </div>
-              </Link>
+                  </Link>
+                </motion.div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerList>
         )}
 
         {total > PAGE_SIZE && (

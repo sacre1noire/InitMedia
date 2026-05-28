@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Layout } from "@/components/Layout";
+import { Modal, useToast } from "@/components/animations";
 import { getVacancy, applyToVacancy } from "@/services/vacancyService";
 import { getEmployerVacancy } from "@/services/employerService";
 import { getMyResumes } from "@/services/resumeService";
 import { Resume } from "@/types/resume";
 import { Vacancy } from "@/types/vacancy";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Send } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/auth";
 
@@ -16,6 +18,7 @@ const VacancyDetailsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const { user } = useAuth();
+  const toast = useToast();
   const [applied, setApplied] = useState(false);
   const [showApply, setShowApply] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
@@ -68,16 +71,16 @@ const VacancyDetailsPage: React.FC = () => {
       await applyToVacancy(Number(id), body);
       setApplied(true);
       setShowApply(false);
-      alert("Вы успешно откликнулись на вакансию!");
+      toast("Отклик отправлен — удачи!", "success");
     } catch (error: unknown) {
       const err = error as { response?: { data?: { detail?: string } } };
       console.error("Failed to apply", error);
       if (err.response?.data?.detail === "Already applied") {
         setApplied(true);
         setShowApply(false);
-        alert("Вы уже откликнулись на эту вакансию");
+        toast("Вы уже откликнулись на эту вакансию", "info");
       } else {
-        alert("Ошибка при отклике на вакансию");
+        toast("Не удалось отправить отклик", "error");
       }
     } finally {
       setApplying(false);
@@ -185,78 +188,86 @@ const VacancyDetailsPage: React.FC = () => {
             {user ? (
               user.role === UserRole.APPLICANT ? (
                 <>
-                  <button
-                    onClick={() =>
-                      applied ? null : setShowApply(true)
-                    }
+                  <motion.button
+                    onClick={() => (applied ? null : setShowApply(true))}
                     disabled={applying || applied}
-                    className={`bg-primary-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-primary-700 shadow-md ${applying || applied ? "opacity-50 cursor-not-allowed" : ""}`}
+                    whileHover={!applied && !applying ? { scale: 1.03 } : undefined}
+                    whileTap={!applied && !applying ? { scale: 0.97 } : undefined}
+                    transition={{ type: "spring", stiffness: 400, damping: 18 }}
+                    className={`bg-primary-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-primary-700 shadow-md inline-flex items-center gap-2 ${applying || applied ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
+                    <Send className="h-4 w-4" />
                     {applying
                       ? "Отправка..."
                       : applied
                         ? "Вы уже откликнулись"
                         : "Откликнуться"}
-                  </button>
-                  {showApply && !applied && (
-                    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-                      <div className="bg-white rounded-xl max-w-lg w-full p-6 space-y-4 shadow-xl">
-                        <h3 className="text-lg font-semibold">Отклик</h3>
-                        <div>
-                          <label className="text-sm text-gray-600">
-                            Сопроводительное письмо
-                          </label>
-                          <textarea
-                            className="input-field mt-1 w-full min-h-[120px]"
-                            value={coverLetter}
-                            onChange={(e) => setCoverLetter(e.target.value)}
-                            placeholder="Кратко расскажите, почему вы подходите..."
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm text-gray-600">
-                            Резюме (если есть в профиле)
-                          </label>
-                          <select
-                            className="input-field mt-1 w-full"
-                            value={resumeId}
-                            onChange={(e) =>
-                              setResumeId(
-                                e.target.value === ""
-                                  ? ""
-                                  : Number(e.target.value),
-                              )
-                            }
-                          >
-                            <option value="">Без резюме</option>
-                            {resumes.map((r) => (
-                              <option key={r.id} value={r.id}>
-                                {r.title}
-                                {r.is_primary ? " (основное)" : ""}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="flex justify-end gap-2 pt-2">
-                          <button
-                            type="button"
-                            className="px-4 py-2 rounded border"
-                            onClick={() => setShowApply(false)}
-                          >
-                            Отмена
-                          </button>
-                          <button
-                            type="button"
-                            className="px-4 py-2 rounded bg-primary-600 text-white"
-                            onClick={handleApply}
-                            disabled={applying}
-                          >
-                            Отправить
-                          </button>
-                        </div>
+                  </motion.button>
+                  <Modal
+                    open={showApply && !applied}
+                    onClose={() => setShowApply(false)}
+                    title="Отклик на вакансию"
+                    size="md"
+                  >
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">
+                          Сопроводительное письмо
+                        </label>
+                        <textarea
+                          className="input-field mt-1 w-full min-h-[120px]"
+                          value={coverLetter}
+                          onChange={(e) => setCoverLetter(e.target.value)}
+                          placeholder="Кратко расскажите, почему вы подходите..."
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">
+                          Резюме (если есть в профиле)
+                        </label>
+                        <select
+                          className="input-field mt-1 w-full"
+                          value={resumeId}
+                          onChange={(e) =>
+                            setResumeId(
+                              e.target.value === ""
+                                ? ""
+                                : Number(e.target.value),
+                            )
+                          }
+                        >
+                          <option value="">Без резюме</option>
+                          {resumes.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.title}
+                              {r.is_primary ? " (основное)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex justify-end gap-2 pt-2">
+                        <motion.button
+                          type="button"
+                          whileTap={{ scale: 0.96 }}
+                          className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setShowApply(false)}
+                        >
+                          Отмена
+                        </motion.button>
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.96 }}
+                          className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 transition-colors disabled:opacity-60 inline-flex items-center gap-2"
+                          onClick={handleApply}
+                          disabled={applying}
+                        >
+                          <Send className="h-4 w-4" />
+                          {applying ? "Отправка..." : "Отправить отклик"}
+                        </motion.button>
                       </div>
                     </div>
-                  )}
+                  </Modal>
                 </>
               ) : (
                 <div className="text-gray-500">

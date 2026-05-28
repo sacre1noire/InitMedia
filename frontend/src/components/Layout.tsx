@@ -1,8 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/auth"; // Import UserRole
 import { getProfile } from "@/services/profileService";
+import { useConfirm } from "@/components/animations";
 import {
   User,
   Menu,
@@ -23,10 +25,21 @@ export const Layout: React.FC<{
 }> = ({ children, fullBleed = false }) => {
   const { logout, user } = useAuth();
   const location = useLocation();
+  const confirm = useConfirm();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    const ok = await confirm({
+      title: "Выйти из аккаунта?",
+      description: "Вам потребуется снова войти, чтобы продолжить.",
+      confirmLabel: "Выйти",
+      variant: "danger",
+    });
+    if (ok) logout();
+  };
 
   React.useEffect(() => {
     const loadAvatar = async () => {
@@ -176,7 +189,7 @@ export const Layout: React.FC<{
                       Профиль
                     </Link>
                     <button
-                      onClick={logout}
+                      onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                     >
                       Выйти
@@ -202,8 +215,15 @@ export const Layout: React.FC<{
         </div>
 
         {/* Mobile menu */}
+        <AnimatePresence>
         {isMenuOpen && (
-          <div className="sm:hidden bg-white border-b border-gray-200">
+          <motion.div
+            className="sm:hidden bg-white border-b border-gray-200 overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
             <div className="pt-2 pb-3 space-y-1">
               <Link
                 to="/vacancies?type=vacancy"
@@ -299,14 +319,15 @@ export const Layout: React.FC<{
                 </div>
               )}
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-red-600 hover:bg-red-50 hover:border-red-300"
               >
                 Выйти
               </button>
             </div>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </nav>
 
       <main

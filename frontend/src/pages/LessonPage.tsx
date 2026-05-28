@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { getLesson, completeLesson, getCourse } from "@/services/courseService";
 import { Lesson, Course } from "@/types/course";
+import { useToast } from "@/components/animations";
 import {
   Loader2,
   ArrowLeft,
@@ -16,6 +17,7 @@ import {
 const LessonPage: React.FC = () => {
   const { id, lessonId } = useParams<{ id: string; lessonId: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,7 +67,7 @@ const LessonPage: React.FC = () => {
       }
     } catch (error) {
       console.error(error);
-      alert("Ошибка при сохранении прогресса");
+      toast("Не удалось сохранить прогресс", "error");
     } finally {
       setCompleting(false);
     }

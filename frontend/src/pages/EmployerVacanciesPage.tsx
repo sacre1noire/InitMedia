@@ -4,11 +4,15 @@ import { Layout } from "@/components/Layout";
 import { getMyVacancies, deleteVacancy } from "@/services/employerService";
 import { Vacancy } from "@/types/vacancy";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import { motion } from "framer-motion";
+import { useConfirm, useToast, StaggerList, StaggerItem } from "@/components/animations";
 
 const EmployerVacanciesPage: React.FC = () => {
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const confirm = useConfirm();
+  const toast = useToast();
 
   const statusLabel = (status: Vacancy["status"]) => {
     switch (status) {
@@ -36,13 +40,20 @@ const EmployerVacanciesPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm("Вы уверены, что хотите удалить эту вакансию?")) {
-      try {
-        await deleteVacancy(id);
-        setVacancies(vacancies.filter((v) => v.id !== id));
-      } catch (error) {
-        console.error("Failed to delete vacancy", error);
-      }
+    const ok = await confirm({
+      title: "Удалить вакансию?",
+      description: "Вакансия и все связанные с ней отклики будут скрыты.",
+      confirmLabel: "Удалить",
+      variant: "danger",
+    });
+    if (!ok) return;
+    try {
+      await deleteVacancy(id);
+      setVacancies(vacancies.filter((v) => v.id !== id));
+      toast("Вакансия удалена", "success");
+    } catch (error) {
+      console.error("Failed to delete vacancy", error);
+      toast("Не удалось удалить вакансию", "error");
     }
   };
 
@@ -56,13 +67,15 @@ const EmployerVacanciesPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Мои вакансии</h1>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => navigate("/employer/vacancies/new")}
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center"
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center shadow-sm"
           >
             <Plus className="w-5 h-5 mr-2" />
             Создать вакансию
-          </button>
+          </motion.button>
         </div>
 
         {loading ? (
@@ -73,9 +86,9 @@ const EmployerVacanciesPage: React.FC = () => {
           </div>
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
+            <StaggerList className="divide-y divide-gray-200">
               {vacancyItems.map((vacancy) => (
-                <li key={vacancy.id}>
+                <StaggerItem key={vacancy.id}>
                   <div className="px-4 py-4 sm:px-6 flex justify-between items-center">
                     <div>
                       <h3 className="text-lg leading-6 font-medium text-primary-600 truncate">
@@ -121,9 +134,9 @@ const EmployerVacanciesPage: React.FC = () => {
                       </button>
                     </div>
                   </div>
-                </li>
+                </StaggerItem>
               ))}
-            </ul>
+            </StaggerList>
           </div>
         )}
       </div>

@@ -16,6 +16,7 @@ coverage.out
 
 # Env / secrets
 .env
+.env.local
 backend/.env
 
 # Build artifacts

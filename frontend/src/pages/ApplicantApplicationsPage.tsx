@@ -7,10 +7,14 @@ import {
 } from "@/services/applicationService";
 import { Application, ApplicationStatus } from "@/types/application";
 import { Trash2, ExternalLink } from "lucide-react";
+import { motion } from "framer-motion";
+import { useConfirm, useToast, StaggerList, StaggerItem } from "@/components/animations";
 
 const ApplicantApplicationsPage: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
+  const toast = useToast();
 
   useEffect(() => {
     loadApplications();
@@ -28,13 +32,20 @@ const ApplicantApplicationsPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm("Вы уверены, что хотите отозвать эту заявку?")) {
-      try {
-        await deleteApplication(id);
-        setApplications(applications.filter((app) => app.id !== id));
-      } catch (error) {
-        console.error("Failed to delete application", error);
-      }
+    const ok = await confirm({
+      title: "Отозвать заявку?",
+      description: "Работодатель больше не увидит её в списке откликов.",
+      confirmLabel: "Отозвать",
+      variant: "danger",
+    });
+    if (!ok) return;
+    try {
+      await deleteApplication(id);
+      setApplications(applications.filter((app) => app.id !== id));
+      toast("Заявка отозвана", "success");
+    } catch (error) {
+      console.error("Failed to delete application", error);
+      toast("Не удалось отозвать заявку", "error");
     }
   };
 
@@ -64,11 +75,11 @@ const ApplicantApplicationsPage: React.FC = () => {
             Вы еще не откликались на вакансии.
           </div>
         ) : (
-          <div className="space-y-4">
+          <StaggerList className="space-y-4">
             {applications.map((app) => (
-              <div
+              <StaggerItem
                 key={app.id}
-                className="bg-white shadow rounded-lg p-6 flex justify-between items-start"
+                className="bg-white shadow rounded-lg p-6 flex justify-between items-start hover:shadow-md transition-shadow"
               >
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2 flex-wrap">
@@ -105,18 +116,19 @@ const ApplicantApplicationsPage: React.FC = () => {
                     {statusLabels[app.status]}
                   </span>
                   {app.status === ApplicationStatus.PENDING && (
-                    <button
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => handleDelete(app.id)}
                       className="text-red-500 hover:text-red-700 text-sm flex items-center mt-2"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
                       Отозвать
-                    </button>
+                    </motion.button>
                   )}
                 </div>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerList>
         )}
       </div>
     </Layout>

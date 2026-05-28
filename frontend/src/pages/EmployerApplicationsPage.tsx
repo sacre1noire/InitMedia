@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { Layout } from "@/components/Layout";
+import { useConfirm, useToast, StaggerList, StaggerItem } from "@/components/animations";
 import {
   getMyApplications,
   updateApplicationStatus,
@@ -9,6 +11,8 @@ import { Application, ApplicationStatus } from "@/types/application";
 const EmployerApplicationsPage: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
+  const toast = useToast();
 
   useEffect(() => {
     loadApplications();
@@ -26,13 +30,25 @@ const EmployerApplicationsPage: React.FC = () => {
   };
 
   const handleStatusChange = async (id: number, status: ApplicationStatus) => {
+    const isAccept = status === ApplicationStatus.ACCEPTED;
+    const ok = await confirm({
+      title: isAccept ? "Принять кандидата?" : "Отказать кандидату?",
+      description: isAccept
+        ? "Кандидат увидит, что вы пригласили его на собеседование."
+        : "Кандидат увидит статус «Отказ».",
+      confirmLabel: isAccept ? "Принять" : "Отказать",
+      variant: isAccept ? "success" : "danger",
+    });
+    if (!ok) return;
     try {
       await updateApplicationStatus(id, status);
       setApplications(
         applications.map((app) => (app.id === id ? { ...app, status } : app)),
       );
+      toast(isAccept ? "Кандидат принят" : "Отклик отклонён", "success");
     } catch (error) {
       console.error("Failed to update status", error);
+      toast("Не удалось изменить статус", "error");
     }
   };
 
@@ -51,11 +67,11 @@ const EmployerApplicationsPage: React.FC = () => {
           </div>
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-            <ul className="divide-y divide-gray-200">
+            <StaggerList className="divide-y divide-gray-200">
               {applications.map((app) => (
-                <li
+                <StaggerItem
                   key={app.id}
-                  className="p-4 hover:bg-gray-50 flex items-center justify-between"
+                  className="p-4 hover:bg-gray-50 flex items-center justify-between transition-colors"
                 >
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
@@ -97,7 +113,9 @@ const EmployerApplicationsPage: React.FC = () => {
                   <div className="ml-4 flex-shrink-0 flex items-center space-x-2">
                     {app.status === ApplicationStatus.PENDING && (
                       <>
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() =>
                             handleStatusChange(
                               app.id,
@@ -107,8 +125,10 @@ const EmployerApplicationsPage: React.FC = () => {
                           className="bg-green-100 text-green-800 px-3 py-1 rounded-md text-sm hover:bg-green-200"
                         >
                           Принять
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() =>
                             handleStatusChange(
                               app.id,
@@ -118,13 +138,13 @@ const EmployerApplicationsPage: React.FC = () => {
                           className="bg-red-100 text-red-800 px-3 py-1 rounded-md text-sm hover:bg-red-200"
                         >
                           Отказать
-                        </button>
+                        </motion.button>
                       </>
                     )}
                   </div>
-                </li>
+                </StaggerItem>
               ))}
-            </ul>
+            </StaggerList>
           </div>
         )}
       </div>

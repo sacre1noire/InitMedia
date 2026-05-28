@@ -7,6 +7,8 @@ import { getCompanies } from "@/services/companyService";
 import { Company } from "@/types/company";
 import { UserRole } from "@/types/auth";
 import { Loader2, Search } from "lucide-react";
+import { motion } from "framer-motion";
+import { StaggerList, StaggerItem } from "@/components/animations";
 
 const CompaniesPage: React.FC = () => {
     const { user } = useAuth();
@@ -81,19 +83,22 @@ const CompaniesPage: React.FC = () => {
                         Компании не найдены.
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <StaggerList className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         {filtered.map((company) => (
-                            <CompanyCard
-                                key={company.id}
-                                company={company}
-                                canEdit={
-                                    !!user &&
-                                    (user.role === UserRole.ADMIN ||
-                                        (user.role === UserRole.EMPLOYER && user.id === company.owner_id))
-                                }
-                            />
+                            <StaggerItem key={company.id}>
+                                <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
+                                    <CompanyCard
+                                        company={company}
+                                        canEdit={
+                                            !!user &&
+                                            (user.role === UserRole.ADMIN ||
+                                                (user.role === UserRole.EMPLOYER && user.id === company.owner_id))
+                                        }
+                                    />
+                                </motion.div>
+                            </StaggerItem>
                         ))}
-                    </div>
+                    </StaggerList>
                 )}
             </div>
         </Layout>

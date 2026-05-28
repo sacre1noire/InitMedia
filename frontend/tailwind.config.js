@@ -17,6 +17,35 @@ export default {
           900: "#1a3054",
         },
       },
+      keyframes: {
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "slide-up": {
+          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "-1000px 0" },
+          "100%": { backgroundPosition: "1000px 0" },
+        },
+        "pulse-soft": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.6" },
+        },
+      },
+      animation: {
+        "fade-in": "fade-in 0.25s ease-out",
+        "slide-up": "slide-up 0.3s ease-out",
+        "scale-in": "scale-in 0.2s ease-out",
+        shimmer: "shimmer 2s linear infinite",
+        "pulse-soft": "pulse-soft 1.5s ease-in-out infinite",
+      },
     },
   },
   plugins: [],
