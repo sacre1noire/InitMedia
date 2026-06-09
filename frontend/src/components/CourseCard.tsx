@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Course } from "@/types/course";
 import { Clock, Book } from "lucide-react";
+import { MotionCard } from "@/components/animations";
 
 interface CourseCardProps {
   course: Course;
@@ -10,7 +11,7 @@ interface CourseCardProps {
 export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   return (
     <Link to={`/courses/${course.id}`} className="block group">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-shadow hover:shadow-md">
+      <MotionCard className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-shadow hover:shadow-md">
         <div className="aspect-w-16 aspect-h-9 bg-gray-100 relative">
           {course.cover_url ? (
             <img
@@ -42,7 +43,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             {course.description}
           </p>
         </div>
-      </div>
+      </MotionCard>
     </Link>
   );
 };

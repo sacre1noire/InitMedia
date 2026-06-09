@@ -3,9 +3,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { getVacancies } from "@/services/vacancyService";
 import { Vacancy } from "@/types/vacancy";
-import { Loader2, Search, MapPin, SlidersHorizontal, X } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal, X } from "lucide-react";
 import { motion } from "framer-motion";
-import { StaggerList, StaggerItem } from "@/components/animations";
+import { StaggerList, StaggerItem, SkeletonGrid } from "@/components/animations";
 
 const PAGE_SIZE = 20;
 
@@ -326,9 +326,7 @@ const VacanciesPage: React.FC = () => {
         )}
 
         {loading ? (
-          <div className="flex justify-center p-10">
-            <Loader2 className="animate-spin text-primary-600 w-8 h-8" />
-          </div>
+          <SkeletonGrid count={4} className="space-y-4" />
         ) : vacancies.length === 0 ? (
           <p className="text-center text-gray-500 py-10">
             {type === "internship" ? "Стажировок" : "Вакансий"} не найдено

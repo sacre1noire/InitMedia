@@ -6,9 +6,9 @@ import CompanyCard from "@/components/CompanyCard";
 import { getCompanies } from "@/services/companyService";
 import { Company } from "@/types/company";
 import { UserRole } from "@/types/auth";
-import { Loader2, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { motion } from "framer-motion";
-import { StaggerList, StaggerItem } from "@/components/animations";
+import { StaggerList, StaggerItem, SkeletonGrid } from "@/components/animations";
 
 const CompaniesPage: React.FC = () => {
     const { user } = useAuth();
@@ -75,9 +75,7 @@ const CompaniesPage: React.FC = () => {
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center py-12">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                    </div>
+                    <SkeletonGrid count={4} className="grid grid-cols-1 gap-4 md:grid-cols-2" />
                 ) : filtered.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-gray-500">
                         Компании не найдены.

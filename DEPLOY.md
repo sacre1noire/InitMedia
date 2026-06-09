@@ -149,6 +149,47 @@ docker compose down
 docker compose down -v
 ```
 
+## CI/CD (GitHub Actions)
+
+Настроено в `.github/workflows/`:
+
+- **`ci.yml`** — запускается на каждый пуш и PR: TypeScript type-check + `vite build`, `go build ./...`
+- **`deploy.yml`** — запускается только при пуше в `master`: SSH на VPS → `git pull` → `docker compose --env-file .env.production up -d --build` → миграции
+
+### Первоначальная настройка
+
+**1. Добавить deploy-ключ на VPS** (один раз, с локальной машины):
+
+```bash
+ssh-copy-id -i ~/.ssh/initmedia_deploy.pub <USER>@5.35.99.120
+# Проверка:
+ssh -i ~/.ssh/initmedia_deploy 5.35.99.120 echo OK
+```
+
+**2. Добавить GitHub Secrets** в `https://github.com/sacre1noire/InitMedia/settings/secrets/actions`:
+
+| Secret | Значение |
+|---|---|
+| `SSH_HOST` | `5.35.99.120` |
+| `SSH_USER` | имя пользователя на VPS |
+| `SSH_PRIVATE_KEY` | содержимое `~/.ssh/initmedia_deploy` (приватный ключ) |
+| `SSH_PORT` | `22` (необязательно, дефолт) |
+
+Приватный ключ смотреть командой: `cat ~/.ssh/initmedia_deploy`
+
+**3. Убедиться, что на VPS репо склонировано через git** (а не rsync), иначе `git pull` не сработает:
+
+```bash
+ssh <USER>@5.35.99.120 "ls ~/InitMedia/.git" && echo "OK — repo exists"
+```
+
+Если нет — склонировать:
+```bash
+ssh <USER>@5.35.99.120 "git clone https://github.com/sacre1noire/InitMedia ~/InitMedia"
+```
+
+---
+
 ## Что-то улучшить (опционально, не для MVP)
 
 - **HTTPS** — поставить Caddy или nginx + Let's Encrypt перед фронтом и API. Сейчас всё по голому HTTP.

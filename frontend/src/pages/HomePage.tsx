@@ -4,6 +4,7 @@ import { Layout } from '@/components/Layout';
 import { getVacancies } from '@/services/vacancyService';
 import { Vacancy } from '@/types/vacancy';
 import { Briefcase, Clock, MapPin, Sparkles } from 'lucide-react';
+import { Reveal, StaggerList, StaggerItem, MotionCard, SkeletonGrid } from '@/components/animations';
 
 const HomePage: React.FC = () => {
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
@@ -53,8 +54,8 @@ const HomePage: React.FC = () => {
   return (
     <Layout>
       <section className="relative overflow-hidden rounded-2xl border border-primary-100 bg-gradient-to-br from-white via-primary-50 to-primary-100 p-8 shadow-sm">
-        <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-primary-200/40 blur-2xl" />
-        <div className="absolute -bottom-16 -left-10 h-48 w-48 rounded-full bg-primary-300/30 blur-3xl" />
+        <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-primary-200/40 blur-2xl animate-float motion-reduce:animate-none" />
+        <div className="absolute -bottom-16 -left-10 h-48 w-48 rounded-full bg-primary-300/30 blur-3xl animate-float-slow motion-reduce:animate-none" />
 
         <div className="relative grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
@@ -105,17 +106,18 @@ const HomePage: React.FC = () => {
       </section>
 
       <section className="mt-10">
-        <div className="flex items-center justify-between">
+        <Reveal className="flex items-center justify-between" y={16}>
           <h2 className="text-2xl font-semibold text-gray-900">Свежие вакансии</h2>
           <Link to="/vacancies" className="text-sm font-medium text-primary-600 hover:text-primary-700">
             Смотреть все
           </Link>
-        </div>
+        </Reveal>
 
         {loading ? (
-          <div className="mt-6 rounded-xl border border-dashed border-gray-200 bg-white p-6 text-center text-gray-500">
-            Загружаем вакансии...
-          </div>
+          <SkeletonGrid
+            count={3}
+            className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+          />
         ) : error ? (
           <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-700">
             {error}
@@ -125,11 +127,11 @@ const HomePage: React.FC = () => {
             Пока нет опубликованных вакансий.
           </div>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <StaggerList className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {cards.map((item) => (
-              <div
-                key={item.id}
-                className="flex flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              <StaggerItem key={item.id} className="h-full">
+              <MotionCard
+                className="flex h-full flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex items-start justify-between">
                   <div className="rounded-xl bg-primary-50 p-2 text-primary-600">
@@ -163,9 +165,10 @@ const HomePage: React.FC = () => {
                     Подробнее →
                   </Link>
                 </div>
-              </div>
+              </MotionCard>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerList>
         )}
       </section>
     </Layout>

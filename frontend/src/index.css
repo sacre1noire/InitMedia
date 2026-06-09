@@ -45,7 +45,7 @@
 }
 
 .btn-primary {
-  @apply w-full bg-primary-800 hover:bg-primary-900 text-primary-50 font-semibold py-2.5 px-4 rounded-lg transition-colors duration-200;
+  @apply w-full bg-primary-800 hover:bg-primary-900 text-primary-50 font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 active:scale-[0.98] hover:shadow-md hover:shadow-primary-300/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2;
 }
 
 .input-field {

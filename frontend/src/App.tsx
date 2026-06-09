@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AnimatePresence, MotionConfig } from "framer-motion";
+import { Loader2 } from "lucide-react";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AuthGuard } from "@/components/AuthGuard";
 import { ApplicantRoute } from "@/components/ApplicantRoute";
 import { ConfirmProvider, ToastProvider, PageTransition } from "@/components/animations";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import HomePage from "@/pages/HomePage";
+import LandingPage from "@/pages/LandingPage";
 import ProfilePage from "@/pages/ProfilePage";
 import ProfileEditPage from "@/pages/ProfileEditPage";
 import VacanciesPage from "@/pages/VacanciesPage";
@@ -31,6 +33,24 @@ import ResumeListPage from "@/pages/ResumeListPage";
 import ResumeEditPage from "@/pages/ResumeEditPage";
 import ResumePreviewPage from "@/pages/ResumePreviewPage";
 
+const RootRoute = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+      </div>
+    );
+  }
+
+  return isAuthenticated ? (
+    <PageTransition><HomePage /></PageTransition>
+  ) : (
+    <PageTransition><LandingPage /></PageTransition>
+  );
+};
+
 const AnimatedRoutes = () => {
   const location = useLocation();
   return (
@@ -39,14 +59,7 @@ const AnimatedRoutes = () => {
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
 
-        <Route
-          path="/"
-          element={
-            <AuthGuard>
-              <PageTransition><HomePage /></PageTransition>
-            </AuthGuard>
-          }
-        />
+        <Route path="/" element={<RootRoute />} />
 
         <Route
           path="/profile"
@@ -312,11 +325,13 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ToastProvider>
-          <ConfirmProvider>
-            <AnimatedRoutes />
-          </ConfirmProvider>
-        </ToastProvider>
+        <MotionConfig reducedMotion="user">
+          <ToastProvider>
+            <ConfirmProvider>
+              <AnimatedRoutes />
+            </ConfirmProvider>
+          </ToastProvider>
+        </MotionConfig>
       </AuthProvider>
     </BrowserRouter>
   );
