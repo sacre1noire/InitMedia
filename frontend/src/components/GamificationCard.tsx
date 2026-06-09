@@ -1,6 +1,8 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { Trophy, Zap } from "lucide-react";
 import { UserGamification } from "@/types/gamification";
+import { AnimatedCounter } from "@/components/animations";
 
 interface GamificationCardProps {
   stats: UserGamification;
@@ -34,7 +36,7 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({
             <Zap className="h-3.5 w-3.5 shrink-0" /> XP
           </p>
           <p className="text-lg sm:text-2xl font-bold text-amber-900">
-            {stats.total_xp}
+            <AnimatedCounter value={stats.total_xp} duration={1.2} />
           </p>
         </div>
       </div>
@@ -43,7 +45,14 @@ export const GamificationCard: React.FC<GamificationCardProps> = ({
           <span>До следующего уровня</span>
           <span>{stats.progress_percent}%</span>
         </div>
-        <div className="h-full rounded-full bg-amber-500 transition-all" style={{ width: `${stats.progress_percent}%` }} />
+        <div className="h-2 overflow-hidden rounded-full bg-amber-200/60">
+          <motion.div
+            className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-600"
+            initial={{ width: 0 }}
+            animate={{ width: `${stats.progress_percent}%` }}
+            transition={{ duration: 1, ease: "easeOut" }}
+          />
+        </div>
         <p className="text-[0.65rem] sm:text-xs text-amber-700/80 mt-1">
           Осталось {stats.xp_to_next_level} XP
         </p>
